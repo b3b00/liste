@@ -24,14 +24,15 @@
     
         export let message: string = "empty message"
 
-        let itemsByCategory : {[category:string]:ShopItem[]};
+        let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}};
     
         function updateItemsByCategory() {
+            console.log('updating items by category',$categories,$list);
             itemsByCategory = {};
             let items = $list;
-            let categories = items.map(x => x.category).filter((value, index, array) => array.indexOf(value) === index);
-            categories.forEach(category => {
-                itemsByCategory[category] = items.filter(x => x.category == category);
+            let categos = $categories;
+            categos.forEach(category => {
+                itemsByCategory[category.label] = {color:category.color, items : items.filter(x => x.category == category.label)};
             });
             console.log('itemsByCategory :: ',itemsByCategory);
         }
@@ -54,6 +55,7 @@
             else if (e.detail.action === 'delete') {
                 let items = $list;
                 $list = items.filter(x => x.label !== item);
+                updateItemsByCategory();
             }
             else {
                 console.log(`cancel item`)            
@@ -70,22 +72,24 @@
     </script>
     
     <div>
-        {#each $categories as category}
+        {#if itemsByCategory}
+            {#each Object.entries(itemsByCategory) as [category,content]}
 
-            <Paper>
-                <Title on:click={() => openEditor("",category.label,category.color)} style="color:{category.color}">{category.label}</Title>
-                <Content>
-                    <!-- <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>
-                        <Icon class="material-icons">plus</Icon>
-                      </Fab> -->
-                    {#if (itemsByCategory && Object.hasOwn(itemsByCategory,category.label) && itemsByCategory[category.label] && itemsByCategory[category.label].length > 0)}
-                        {#each itemsByCategory[category.label] as categoryItem} 
-                            <Button style="background-color:{categoryItem.color}" on:click={() => openEditor(categoryItem.label, categoryItem.category, categoryItem.color)}>{categoryItem.label} </Button>
-                        {/each}
-                    {/if}
-                </Content>
-            </Paper>
-        {/each}
+                <Paper>
+                    <Title on:click={() => openEditor("",category,content.color)} style="color:{content.color}">{category}</Title>
+                    <Content>
+                        <!-- <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>
+                            <Icon class="material-icons">plus</Icon>
+                        </Fab> -->
+                        {#if (content.items && content.items.length > 0)}
+                            {#each content.items as categoryItem} 
+                                <Button style="background-color:{categoryItem.color}" on:click={() => openEditor(categoryItem.label, categoryItem.category, categoryItem.color)}>{categoryItem.label} </Button>
+                            {/each}
+                        {/if}
+                    </Content>
+                </Paper>
+            {/each}
+        {/if}
 
 
         <Dialog

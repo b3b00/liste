@@ -3,8 +3,11 @@ export interface Category {
     color : string,
 }
 
+
+
 export interface ShopItem {
     label: string,
     category: string,
-    color: string 
+    color: string,
+    done : boolean,
 }
