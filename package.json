@@ -6,7 +6,7 @@
     "description": "Template for Cloudflare pages using itty-router and svelte",
     "scripts": {
         "format": "prettier --write '**/*.{js,css,json,md}'",
-        "dev": "wrangler pages dev ./public/ --port=8888",
+        "dev": "wrangler pages dev --local-protocol=https ./public/ --port=8888",
         "build:front": "rollup -c",
         "build:auto": "rollup -c -w",
         "build:back": "tsc",
@@ -15,8 +15,8 @@
     "author": "{{ authors }}",
     "license": "ISC",
     "devDependencies": {
-        
         "@cloudflare/workers-types": "^4.20231121.0",
+        "@smui/icon-button": "^7.0.0",
         "@svelte-plugins/tooltips": "^3.0.0",
         "prettier": "^1.17.0",
         "ts-node": "^10.9.2",
@@ -35,6 +35,7 @@
         "rollup-plugin-svelte": "^7.1.6",
         "serverless-cloudflare-workers": "^1.2.0",
         "svelte": "^4.0.0",
+        "svelte-material-ui": "^7.0.0",
         "svelte-preprocess": "^5.1.3",
         "svelte-spa-router": "^3.3.0",
         "tslib": "^2.6.2"
