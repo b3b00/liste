@@ -94,7 +94,7 @@
     </script>
     
     <div>
-        <h2>this is where categories live.</h2>
+
         <Dialog
   bind:open
   selection

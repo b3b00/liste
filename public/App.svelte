@@ -65,8 +65,7 @@
       color={secondaryColor ? 'secondary' : 'primary'}
     >
       <Row>
-        <Section>
-          <IconButton class="material-icons" on:click={() => toggleDrawer()}>menu</IconButton>
+        <Section>          
           <Title>{active}</Title>
         </Section>
         <Section align="end" toolbar>
