@@ -14,6 +14,5 @@
     </script>
     
     <div>
-        <h2>this is component C2</h2>
-        <h3>{message}</h3>
+        <h2>to come</h2>
     </div>

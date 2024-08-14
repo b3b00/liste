@@ -1,8 +1,8 @@
 <script>
   
-    import C1 from "./C1.svelte";
-    import C2 from "./C2.svelte";
-    import C3 from "./C3.svelte";    
+    import Categories from "./Categories.svelte";
+    import ShopList from "./List.svelte";    
+    import {push, pop, replace} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     
     import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
@@ -13,9 +13,8 @@
     
   
     const routes = {
-      '/c1/:message': C1,    
-      '/c2/:message': C2,
-      '/c3/:message': C3  
+      '/categories': Categories,
+      '/list': ShopList,
   }
   
   let drawer;
@@ -23,6 +22,7 @@
   let satus = true;
   
       import { onMount } from 'svelte';
+    
   
       onMount(async () => {        
           });
@@ -70,26 +70,38 @@
           <Title>{active}</Title>
         </Section>
         <Section align="end" toolbar>
-          <a href="#/c1/titi">Titi</a>
+          <IconButton on:click={() => push('/categories')} toggle>
+            <Icon class="material-icons">alarm_off</Icon>
+          </IconButton>
+         
+          &nbsp;
+         
+          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
+          <Button on:click={() => push('/categories')}>
+            <Label>Catégories</Label>
+          </Button>
+
+          <!-- <a href="#/categories"><IconButton Catégories</a> -->
         </Section>
         <Section align="end" toolbar>
-          <a href="#/c2/grominet">grominet</a>
+          <a href="#/list">Liste</a>
         </Section>
       </Row>
     </TopAppBar>
-    <Drawer variant="modal" bind:open>
+    <!--<Drawer variant="modal" bind:open>
         <Header>
           <Title>Drawer</Title>          
         </Header>
         <Content>
           <List>
             <Item
-              href="javascript:void(0)"
-              on:click={() => setActive('Gray Kittens')}
-              activated={active === 'Gray Kittens'}
-            >
-              <Text>Gray Kittens</Text>
-            </Item>
+          href="javascript:void(0)"
+          on:click={() => setActive('Inbox')}
+          activated={active === 'Inbox'}
+        >
+          <Icon class="material-icons" aria-hidden="true">inbox</Icon>
+          <Text>Inbox</Text>
+        </Item>
             <Item
               href="javascript:void(0)"
               on:click={() => setActive('A Space Rocket')}
@@ -120,7 +132,7 @@
             </Item>
           </List>
         </Content>
-      </Drawer>
+      </Drawer>-->
 
   
   <Scrim />
