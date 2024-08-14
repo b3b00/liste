@@ -24,19 +24,24 @@
   
       import { onMount } from 'svelte';
   
-      onMount(async () => {
-        window.addEventListener('online', onOnLine);
-        window.addEventListener('offline', onOffLine);
+      onMount(async () => {        
           });
   
   
   function toggleDrawer() {
-    drawerOpen = ! drawerOpen;
+    console.log(`toggling drawer ${open} -> ${!open}`);
+    open = ! open;
   }
   
   function toggleAndMove(to) {
     toggleDrawer(); 
     push(to);
+  }
+
+  function setActive(item) {
+    console.log(`setActive(${item})`);
+    toggleDrawer();
+    active = item;
   }
   
   let prominent = false;
@@ -61,19 +66,20 @@
     >
       <Row>
         <Section>
-          <IconButton class="material-icons" on:click={() => (open = !open)}>menu</IconButton>
-          <Title>Flex Static</Title>
+          <IconButton class="material-icons" on:click={() => toggleDrawer()}>menu</IconButton>
+          <Title>{active}</Title>
         </Section>
         <Section align="end" toolbar>
           <a href="#/c1/titi">Titi</a>
+        </Section>
+        <Section align="end" toolbar>
           <a href="#/c2/grominet">grominet</a>
         </Section>
       </Row>
     </TopAppBar>
-    <Drawer variant="dismissible" bind:open>
+    <Drawer variant="modal" bind:open>
         <Header>
-          <Title>Super Drawer</Title>
-          <Subtitle>It's the best drawer.</Subtitle>
+          <Title>Drawer</Title>          
         </Header>
         <Content>
           <List>
