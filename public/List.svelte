@@ -49,6 +49,7 @@
                 items.push(shopItem);
                 $list = items;
                 updateItemsByCategory();
+                $categories = $categories;
             }
             else if (e.detail.action === 'delete') {
                 let items = $list;
@@ -69,20 +70,17 @@
     </script>
     
     <div>
-
-        <Button on:click={() => open=true}>Ajouter</Button>
-
         {#each $categories as category}
 
             <Paper>
-                <Title style="color:{category.color}">{category.label}</Title>
+                <Title on:click={() => openEditor("",category.label,category.color)} style="color:{category.color}">{category.label}</Title>
                 <Content>
-                    <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>
+                    <!-- <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>
                         <Icon class="material-icons">plus</Icon>
-                      </Fab>
+                      </Fab> -->
                     {#if (itemsByCategory && Object.hasOwn(itemsByCategory,category.label) && itemsByCategory[category.label] && itemsByCategory[category.label].length > 0)}
                         {#each itemsByCategory[category.label] as categoryItem} 
-                            <Button style="background-color:{categoryItem.color}">{categoryItem.label}</Button>
+                            <Button style="background-color:{categoryItem.color}" on:click={() => openEditor(categoryItem.label, categoryItem.category, categoryItem.color)}>{categoryItem.label} </Button>
                         {/each}
                     {/if}
                 </Content>
