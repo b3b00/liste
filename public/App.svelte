@@ -71,7 +71,7 @@
         </Section>
         <Section align="end" toolbar>
           <IconButton on:click={() => push('/categories')} toggle>
-            <Icon class="material-icons">alarm_off</Icon>
+            <Icon class="material-icons">format_list_bulleted</Icon>
           </IconButton>
          
           &nbsp;
@@ -84,7 +84,16 @@
           <!-- <a href="#/categories"><IconButton Catégories</a> -->
         </Section>
         <Section align="end" toolbar>
-          <a href="#/list">Liste</a>
+          <IconButton on:click={() => push('/list')} toggle>
+            <Icon class="material-icons">basket_outline</Icon>
+          </IconButton>
+         
+          &nbsp;
+         
+          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
+          <Button on:click={() => push('/list')}>
+            <Label>Liste</Label>
+          </Button>
         </Section>
       </Row>
     </TopAppBar>
