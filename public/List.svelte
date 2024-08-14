@@ -8,6 +8,7 @@
     import Button, {Label, Icon} from '@smui/button';
     import Textfield from '@smui/textfield';  
     import Fab, { Icon } from '@smui/fab';
+    import IconButton from '@smui/icon-button'
 
     list.useLocalStorage();
     categories.useLocalStorage();
@@ -69,9 +70,25 @@
             open = true;
         }
 
+        function shop(itemLabel: string) {
+
+            let items = $list;
+            items = items.filter( x => {
+                if (x.label == itemLabel) {
+                    x.done = true;
+                }
+                return x;
+            })
+            $list = items;
+            updateItemsByCategory();
+        }
+
     </script>
     
     <div>
+        <IconButton on:click={() => {} } toggle>
+            <Icon class="material-icons">trash_outline</Icon>
+          </IconButton>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
@@ -83,7 +100,7 @@
                         </Fab> -->
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
-                                <Button style="background-color:{categoryItem.color}" on:click={() => openEditor(categoryItem.label, categoryItem.category, categoryItem.color)}>{categoryItem.label} </Button>
+                                <Button style="background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}" on:click={() => shop(categoryItem.label)}>{categoryItem.label} </Button>
                             {/each}
                         {/if}
                     </Content>
