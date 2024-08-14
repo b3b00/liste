@@ -10,6 +10,7 @@
     import 'material-design-inspired-color-picker';
     import {categories} from './store';
     import {Category} from './model';
+    import { action } from "@smui/icon-button/src/IconButton.svelte"
     
     categories.useLocalStorage();
 
@@ -53,6 +54,15 @@
                 categoryLabel = "";
             }
             editionMode = false;
+        }
+        else if (e.detail.action === 'delete') {
+            console.log(`remove a category >${categoryLabel}<:>${categoryColor}<`);
+            let category:Category = {label:categoryLabel,color:categoryColor};
+            let categos = $categories;
+            categos = categos.filter(x => x.label !== oldCategoryLabel);
+            $categories = categos;
+            categoryColor = "#000000";
+            categoryLabel = "";
         }
         else {
             console.log(`cancel category`)
@@ -103,6 +113,9 @@
     <Button>
       <Label>Annuler</Label>
     </Button>
+    <Button action="delete">
+        <label>Supprimer</label> 
+    </Button>
     <Button action="OK">
       <Label>OK</Label>
     </Button>
@@ -113,9 +126,9 @@
   <Label>Open Dialog</Label>
 </Button>
 
-<div>
+<div style="display:flex;flex-direction: column;">
     {#each $categories as category}
-        <Button style="background-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
+        <Button class="button-shaped-round" style="background-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
     {/each}
 
 </div>
