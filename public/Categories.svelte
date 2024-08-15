@@ -128,7 +128,7 @@
 
 <div style="display:flex;flex-direction: column;">
     {#each $categories as category}
-        <Button class="button-shaped-round" style="color:black;font-weight: bold;b-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
+        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
     {/each}
 
 </div>
