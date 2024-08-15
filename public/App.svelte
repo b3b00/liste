@@ -1,4 +1,4 @@
-<script>
+de<script>
   
     import Categories from "./Categories.svelte";
     import ShopList from "./List.svelte";    
@@ -45,8 +45,8 @@
   }
   
   let prominent = false;
-    let dense = false;
-    let secondaryColor = false;
+    let dense = true;
+    let secondaryColor = true;
 
   
       let open = false;
