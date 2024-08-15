@@ -29,6 +29,8 @@ const createWritableStore = <T>(key:string, startValue:T) => {
 
   export const items = createWritableStore<{[category:string]:ShopItem[]}>('items',JSON.parse('[]'));
 
+  export const displayDoneItems = createWritableStore<boolean>('displayDoneItems',true);
+
   export const getItems = (category:string) : ShopItem[] => {
     let itemsForCategory:ShopItem[] = []
     items.update(r => {

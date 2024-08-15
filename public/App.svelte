@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   
     import Categories from "./Categories.svelte";
     import ShopList from "./List.svelte";    
@@ -6,12 +6,14 @@
     import Router from 'svelte-spa-router'
     
     import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
+
     import List, {Item, Text, Separator, Subheader} from '@smui/list';
     import Button, {Label, Icon} from '@smui/button';  
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
     
-  
+    
+
     const routes = {
       '/categories': Categories,
       '/list': ShopList,
@@ -34,26 +36,16 @@
     open = ! open;
   }
   
-  function toggleAndMove(to) {
-    toggleDrawer(); 
-    push(to);
-  }
 
-  function setActive(item) {
-    console.log(`setActive(${item})`);
-    toggleDrawer();
-    active = item;
-  }
   
   let prominent = false;
     let dense = true;
     let secondaryColor = false;
 
-  
       let open = false;
-      let active = "";
+
       
-  
+
   </script>
   
   
@@ -67,7 +59,20 @@
     >
       <Row>
         <Section>          
-          <Title>{active}</Title>
+         
+        </Section>
+        
+        <Section align="end" toolbar>
+          <IconButton on:click={() => push('/list')} toggle>
+            <Icon class="material-icons">basket_outline</Icon>
+          </IconButton>
+         
+          &nbsp;
+         
+          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
+          <Button on:click={() => push('/list')}>
+            <Label>Liste</Label>
+          </Button>
         </Section>
         <Section align="end" toolbar>
           <IconButton on:click={() => push('/categories')} toggle>
@@ -82,18 +87,6 @@
           </Button>
 
           <!-- <a href="#/categories"><IconButton Catégories</a> -->
-        </Section>
-        <Section align="end" toolbar>
-          <IconButton on:click={() => push('/list')} toggle>
-            <Icon class="material-icons">basket_outline</Icon>
-          </IconButton>
-         
-          &nbsp;
-         
-          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
-          <Button on:click={() => push('/list')}>
-            <Label>Liste</Label>
-          </Button>
         </Section>
       </Row>
     </TopAppBar>

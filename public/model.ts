@@ -1,3 +1,5 @@
+import Menu from '@smui/menu';
+
 export interface Category {
     label : string,
     color : string,
@@ -10,4 +12,5 @@ export interface ShopItem {
     category: string,
     color: string,
     done : boolean,
+    menu:Menu|undefined
 }

@@ -2,18 +2,20 @@
 
     import Dialog, { Title as DialogTitle, Content as DialogContent, Actions, InitialFocus } from '@smui/dialog';
     import { onMount } from "svelte";
-    import { list, categories } from './store';
+    import { list, categories, displayDoneItems } from './store';
     import {ShopItem} from './model';
-    import Paper, { Title, Subtitle, Content } from '@smui/paper';
-    import Button, {Label, Icon} from '@smui/button';
-    import Textfield from '@smui/textfield';  
-    import Fab, { Icon } from '@smui/fab';
+    import Paper, { Title, Subtitle, Content } from '@smui/paper';    
+    import Textfield from '@smui/textfield';
     import IconButton from '@smui/icon-button'
+    import Button, { Group, GroupItem, Label, Icon } from '@smui/button';
+    import Menu from '@smui/menu';
+    import List, { Item, Separator, Text } from '@smui/list';
+    import Switch from '@smui/switch';
+    import FormField from '@smui/form-field';
 
     list.useLocalStorage();
     categories.useLocalStorage();
-    
-        export let params;
+    displayDoneItems.useLocalStorage();
 
         let open: boolean = false;
 
@@ -47,7 +49,7 @@
             if (e.detail.action === 'OK') {
                 console.log(`adding item ${item} to category ${itemCategory}`)
                 let items = $list;
-                let shopItem : ShopItem = {label : item, category : itemCategory, color :itemColor};
+                let shopItem : ShopItem = {label : item, category : itemCategory, color :itemColor, done:false, menu:undefined };
                 items.push(shopItem);
                 $list = items;
                 updateItemsByCategory();
@@ -73,12 +75,19 @@
         function shop(itemLabel: string) {
 
             let items = $list;
-            items = items.filter( x => {
+            items = items.map( x => {
                 if (x.label == itemLabel) {
                     x.done = !x.done;
                 }
                 return x;
             })
+            $list = items;
+            updateItemsByCategory();
+        }
+
+        function remove(itemLabel: string) {
+            let items = $list;
+            items = items.filter( x => x.label !== itemLabel)
             $list = items;
             updateItemsByCategory();
         }
@@ -92,19 +101,42 @@
     
     <div>
         <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>Tout effacer</Button>
-        
+        <!-- <FormField align="end">
+            <Switch bind:checked={$displayDoneItems} />
+            <span slot="label">Afficher tout.</span>
+          </FormField> -->
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
                 <Paper square style="margin-bottom:25px">
                     <Title on:click={() => openEditor("",category,content.color)} style="color:{content.color}">{category}</Title>
-                    <Content>
-                        <!-- <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>
-                            <Icon class="material-icons">plus</Icon>
-                        </Fab> -->
+                    <Content>                    
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
-                                <Button style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}" on:click={() => shop(categoryItem.label)}>{categoryItem.label} </Button>
+                                <!-- <Button style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}" 
+                                on:click={() => shop(categoryItem.label)}>{categoryItem.label} </Button> -->
+                                <Group variant="raised">
+                                    <Button on:click={() => shop(categoryItem.label)} variant="raised"
+                                        style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
+                                      <Label>{categoryItem.label}</Label>
+                                    </Button>
+                                    <div use:GroupItem>
+                                      <Button
+                                        style="padding: 0; min-width: 36px;color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
+                                        on:click={() => categoryItem.menu.setOpen(true)}
+                                        variant="raised"
+                                      >
+                                        <Icon class="material-icons" style="margin: 0;">arrow_drop_down</Icon>
+                                      </Button>
+                                      <Menu bind:this={categoryItem.menu} anchorCorner="TOP_LEFT">
+                                        <List>
+                                          <Item on:SMUI:action={() => remove(categoryItem.label)}>
+                                            <Text>Supprimer</Text>
+                                          </Item>
+                                        </List>
+                                      </Menu>
+                                    </div>
+                                  </Group>
                             {/each}
                         {/if}
                     </Content>
