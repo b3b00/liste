@@ -92,7 +92,7 @@
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
-                <Paper>
+                <Paper square>
                     <Title on:click={() => openEditor("",category,content.color)} style="color:{content.color}">{category}</Title>
                     <Content>
                         <!-- <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>
