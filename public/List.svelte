@@ -75,7 +75,7 @@
             let items = $list;
             items = items.filter( x => {
                 if (x.label == itemLabel) {
-                    x.done = true;
+                    x.done = !x.done;
                 }
                 return x;
             })
