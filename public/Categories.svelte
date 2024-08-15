@@ -130,7 +130,7 @@
     {#each $categories as category}
         <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
     {/each}
-
+    <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => { openEditor(false,"","#000000");} }>Nouvelle catégorie...</Button>
 </div>
 
 

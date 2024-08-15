@@ -83,12 +83,16 @@
             updateItemsByCategory();
         }
 
+        function clean() {
+            $list = [];
+            updateItemsByCategory();
+        }
+
     </script>
     
     <div>
-        <IconButton on:click={() => {} }>
-            <Icon class="material-icons">trash_outline</Icon>
-          </IconButton>
+        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>Tout effacer</Button>
+        
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
