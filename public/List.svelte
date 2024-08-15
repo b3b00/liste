@@ -86,13 +86,13 @@
     </script>
     
     <div>
-        <IconButton on:click={() => {} } toggle>
+        <IconButton on:click={() => {} }>
             <Icon class="material-icons">trash_outline</Icon>
           </IconButton>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
-                <Paper square>
+                <Paper square style="margin-bottom:25px">
                     <Title on:click={() => openEditor("",category,content.color)} style="color:{content.color}">{category}</Title>
                     <Content>
                         <!-- <Fab style="background-color:{category.color}" on:click={() => openEditor("",category.label,category.color)}>

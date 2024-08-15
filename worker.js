@@ -5,9 +5,8 @@ const CACHE_NAME = "recetteo-v1.1.2";
 const urlsToCache = [
   "./",
   "./index.html",
-  "./dist/bundle.css",
-  "./dist/bundle.js",
-  "./dist/share.html",
+  "./bundle.css",
+  "./bundle.js",  
   "./images/icons/icon-72x72.png",
   "./images/icons/icon-96x96.png",
   "./images/icons/icon-128x128.png",
@@ -16,12 +15,10 @@ const urlsToCache = [
   "./images/icons/icon-192x192.png",
   "./images/icons/icon-384x384.png",
   "./images/icons/icon-512x512.png",
-  "./images/marmiton.ico",
+  "./images/screenshot.png",
   "https://fonts.googleapis.com/icon?family=Material+Icons",
   "https://fonts.gstatic.com/s/materialicons/v50/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2",
-  "/share",
-  "/toto"
-];
+  ];
 
 function getId(url) {
   let id = url.replace(".aspx","").replace(".html","").replace('https://www.marmiton.org/recettes/','');

@@ -15,6 +15,7 @@
     const routes = {
       '/categories': Categories,
       '/list': ShopList,
+      '/': ShopList,
   }
   
   let drawer;
