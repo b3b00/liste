@@ -100,7 +100,7 @@
                         </Fab> -->
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
-                                <Button style="background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}" on:click={() => shop(categoryItem.label)}>{categoryItem.label} </Button>
+                                <Button style="color:black;font-weight: bold;backround-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}" on:click={() => shop(categoryItem.label)}>{categoryItem.label} </Button>
                             {/each}
                         {/if}
                     </Content>
