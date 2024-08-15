@@ -19,7 +19,15 @@
         "text": "text",  
         "url": "url"  
       }  
-    },    
+    },
+    "categories": [
+      {
+        "platform":"android",
+        "form_factor":"narrow",
+        "label":"listes",
+        "src":"images/screenshot.png"
+      }
+    ],
     "icons": [
         {
           "src": "images/icons/icon-72x72.png",
