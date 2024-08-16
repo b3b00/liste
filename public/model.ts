@@ -13,3 +13,8 @@ export interface ShopItem {
     color: string,
     done : boolean,
 }
+
+export interface ShareData {
+    categories: Category[],
+    list: ShopItem[]
+}

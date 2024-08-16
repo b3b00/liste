@@ -1,22 +1,32 @@
 <script lang="ts">
   
     import Categories from "./Categories.svelte";
-    import ShopList from "./List.svelte";    
+    import ShopList from "./List.svelte";
+    import Share from "./Share.svelte";
+    import {categories, list} from "./store";
+    
+    
     import {push, pop, replace} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     
-    import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
-
-    import List, {Item, Text, Separator, Subheader} from '@smui/list';
+    
     import Button, {Label, Icon} from '@smui/button';  
     import IconButton from '@smui/icon-button';
-    import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
+    import TopAppBar, {Row, Section} from '@smui/top-app-bar';
+    import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
+    import List, {Item, Text, Separator, Subheader} from '@smui/list';
+
+
+    import { ShareData } from "./model";
+    import {shareData } from './share';
     
-    
+    categories.useLocalStorage();
+    list.useLocalStorage();
 
     const routes = {
       '/categories': Categories,
       '/list': ShopList,
+      '/share/:data': Share,
       '/': ShopList,
   }
   
@@ -36,6 +46,12 @@
     open = ! open;
   }
   
+
+  async function share() {
+    let data:ShareData = {"categories":$categories,"list":$list};
+    let url = await shareData(data);
+    navigator.clipboard.writeText(url);
+  }
 
   
   let prominent = false;
@@ -84,6 +100,20 @@
           <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
           <Button on:click={() => push('/categories')}>
             <Label>Catégories</Label>
+          </Button>
+
+          <!-- <a href="#/categories"><IconButton Catégories</a> -->
+        </Section>
+        <Section align="end" toolbar>
+          <IconButton on:click={share} toggle>
+            <Icon class="material-icons">share</Icon>
+          </IconButton>
+         
+          &nbsp;
+         
+          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
+          <Button on:click={share}>
+            <Label>Partager</Label>
           </Button>
 
           <!-- <a href="#/categories"><IconButton Catégories</a> -->
