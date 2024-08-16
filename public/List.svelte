@@ -17,6 +17,8 @@
     categories.useLocalStorage();
     displayDoneItems.useLocalStorage();
 
+        let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
+   
         let open: boolean = false;
 
         let item : string = "";
@@ -24,21 +26,36 @@
         let itemCategory : string = "";
 
         let itemColor : string = "";
-    
-        export let message: string = "empty message"
 
-        let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}};
-    
+        let menus : {[item:string]:Menu} = {}
+
+
+        let displayAll : boolean = true;
+
         function updateItemsByCategory() {
             console.log('updating items by category',$categories,$list);
             itemsByCategory = {};
             let items = $list;
             let categos = $categories;
             categos.forEach(category => {
-                itemsByCategory[category.label] = {color:category.color, items : items.filter(x => x.category == category.label)};
+              console.log(`building category ${category.label}`)
+              let its = items.filter(x => { 
+                  let selected = x.category == category.label && (!x.done || displayAll);
+                  if (selected) {
+                    console.log(`selecting ${x.label}`);                    
+                  }
+                  else {
+                    console.log(`rejecting label:>${x.label}<`)
+                    console.log(`STATUS done:>${x.done}<  displayAll:>${displayAll}< formula:>${(!x.done || displayAll)}<`);
+                    console.log(`category:>${x.category}< // ${category.label} formula:>${x.category == category.label}<`);
+                  }
+                  return selected;
+                } 
+              );
+                itemsByCategory[category.label] = {color:category.color, items : its};
+                console.log('******************************');
             });
-            console.log('itemsByCategory :: ',itemsByCategory);
-        }
+          }
 
         onMount(() => {
             updateItemsByCategory();
@@ -49,9 +66,11 @@
             if (e.detail.action === 'OK') {
                 console.log(`adding item ${item} to category ${itemCategory}`)
                 let items = $list;
-                let shopItem : ShopItem = {label : item, category : itemCategory, color :itemColor, done:false, menu:undefined };
+                console.log('before add',$list);
+                let shopItem : ShopItem = {label : item, category : itemCategory, color :itemColor, done:false};
                 items.push(shopItem);
                 $list = items;
+                console.log('after add',$list);
                 updateItemsByCategory();
                 $categories = $categories;
             }
@@ -79,7 +98,7 @@
                 if (x.label == itemLabel) {
                     x.done = !x.done;
                 }
-                return x;
+                return x; 
             })
             $list = items;
             updateItemsByCategory();
@@ -97,14 +116,20 @@
             updateItemsByCategory();
         }
 
+        function showChecked(event : {selected:boolean}) {
+          $displayDoneItems = event.selected;
+          console.log(`check : ${displayAll} - ${$displayDoneItems}`);
+          updateItemsByCategory();
+        }
+
     </script>
     
     <div>
         <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>Tout effacer</Button>
-        <!-- <FormField align="end">
-            <Switch bind:checked={$displayDoneItems} />
+        <FormField align="end">
+            <Switch bind:checked={displayAll} on:SMUISwitch:change={(event => showChecked(event))}/>
             <span slot="label">Afficher tout.</span>
-          </FormField> -->
+          </FormField>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
@@ -113,8 +138,6 @@
                     <Content>                    
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
-                                <!-- <Button style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}" 
-                                on:click={() => shop(categoryItem.label)}>{categoryItem.label} </Button> -->
                                 <Group variant="raised">
                                     <Button on:click={() => shop(categoryItem.label)} variant="raised"
                                         style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
@@ -123,12 +146,11 @@
                                     <div use:GroupItem>
                                       <Button
                                         style="padding: 0; min-width: 36px;color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
-                                        on:click={() => categoryItem.menu.setOpen(true)}
-                                        variant="raised"
-                                      >
+                                        on:click={() => menus[categoryItem.label].setOpen(true)}
+                                        variant="raised">
                                         <Icon class="material-icons" style="margin: 0;">arrow_drop_down</Icon>
                                       </Button>
-                                      <Menu bind:this={categoryItem.menu} anchorCorner="TOP_LEFT">
+                                      <Menu bind:this={menus[categoryItem.label]} anchorCorner="TOP_LEFT">
                                         <List>
                                           <Item on:SMUI:action={() => remove(categoryItem.label)}>
                                             <Text>Supprimer</Text>

@@ -12,5 +12,4 @@ export interface ShopItem {
     category: string,
     color: string,
     done : boolean,
-    menu:Menu|undefined
 }
