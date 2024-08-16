@@ -46,13 +46,13 @@ const decompressByteArray = (byteArray: Uint8Array): Promise<string> => {
 }
 
 export async function decompress(data:string ) : Promise<string> {
-  let bytes = base64ToArray(data);
+  let bytes = base64ToArray(decodeURIComponent(data));
   return decompressByteArray(bytes);
 }
 
 export async function shareData<T>(data:T) : Promise<string> {
   let bytes = await compress(JSON.stringify(data));
-  let b64 = byteArrayToBase64(bytes);
+  let b64 = encodeURIComponent(byteArrayToBase64(bytes));
   const url = window.location;    
   const urlified = `${url.origin}/#/share/${b64}`;
   return urlified;
