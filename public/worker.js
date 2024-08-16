@@ -1,6 +1,6 @@
 
 
-const CACHE_NAME = "recetteo-v1.1.2";
+const CACHE_NAME = "liste-v0.0.1";
 
 const urlsToCache = [
   "./",
@@ -18,41 +18,42 @@ const urlsToCache = [
   "./images/screenshot.png",
   "https://fonts.googleapis.com/icon?family=Material+Icons",
   "https://fonts.gstatic.com/s/materialicons/v50/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2",
+  "https://cdn.jsdelivr.net/npm/svelte-material-ui@7.0.0/bare.min.css",
   ];
 
-function getId(url) {
-  let id = url.replace(".aspx","").replace(".html","").replace('https://www.marmiton.org/recettes/','');
-  return id;
-}
+// function getId(url) {
+//   let id = url.replace(".aspx","").replace(".html","").replace('https://www.marmiton.org/recettes/','');
+//   return id;
+// }
 
 
-function getParemeter(url, paramName) {
-  const purl = new URL(url);
-  let it = purl.searchParams.get('text');
-  let param = it.next();  
-  return param;
-}
+// function getParemeter(url, paramName) {
+//   const purl = new URL(url);
+//   let it = purl.searchParams.get('text');
+//   let param = it.next();  
+//   return param;
+// }
 
 
-async function getIt(url) {  
+// async function getIt(url) {  
   
-  let marmurl = getParemeter(url,"text");
-  if (!marmurl)  {
-    return null;
-  }
-  id = getId(marmurl);
+//   let marmurl = getParemeter(url,"text");
+//   if (!marmurl)  {
+//     return null;
+//   }
+//   id = getId(marmurl);
         
-  //let apiurl = `http://localhost:5002/marmiton/${id}`;
-  let apiurl = `https://marmiton-api.herokuapp.com/marmiton/${id}`;        
-  try {
-      var res = await fetch(apiurl,{method:'GET'});
-      var j = await res.json();
-      return j;
-  }
-  catch(e) {
-  }
-  return null;
-}
+//   //let apiurl = `http://localhost:5002/marmiton/${id}`;
+//   let apiurl = `https://marmiton-api.herokuapp.com/marmiton/${id}`;        
+//   try {
+//       var res = await fetch(apiurl,{method:'GET'});
+//       var j = await res.json();
+//       return j;
+//   }
+//   catch(e) {
+//   }
+//   return null;
+// }
 
 self.addEventListener('install', function(event) {
   // Perform install steps
@@ -73,27 +74,24 @@ function notNullOrUndefined(value) {
   return value !== null && value !== undefined;
 }
 
-function storeIt(recipe) {
-  // TODO : compute id
-  // TODO : 
-  let recipes = localStorage.getItem('recipes');  
-  let recipeId = 1;
-  if (recipes.length > 0) {
-    let ids = recipes.map(x => x.id);
-    let max = Math.max(...ids);    
-    recipeId = max+1;
-  }  
-  localStorage.setItem('test',recipe);
-}
+// function storeIt(recipe) {
+//   // TODO : compute id
+//   // TODO : 
+//   let recipes = localStorage.getItem('recipes');  
+//   let recipeId = 1;
+//   if (recipes.length > 0) {
+//     let ids = recipes.map(x => x.id);
+//     let max = Math.max(...ids);    
+//     recipeId = max+1;
+//   }  
+//   localStorage.setItem('test',recipe);
+// }
 
 self.addEventListener('fetch', async function(event) {  
-  if (notNullOrUndefined(event) && notNullOrUndefined(event.request) && notNullOrUndefined(event.request.url)  && event.request.url.includes('/share')  && !event.request.url.includes('#/share')) {    
-    let p = getParemeter(event.request.url,'text');
-    //let rec = await getIt(event.request.url);
-    //storeIt(rec);
-    return event.respondWith(Response.redirect('/#/share?text='+p,302));
-  }
-  if (event)
+  // if (notNullOrUndefined(event) && notNullOrUndefined(event.request) && notNullOrUndefined(event.request.url)  && event.request.url.includes('/share')  && !event.request.url.includes('#/share')) {            
+  //   return event.respondWith(Response.redirect('/#/share?text='+p,302));
+  // }
+  // if (event)
   event.respondWith(
     caches.match(event.request)
     .then(function(response) {            

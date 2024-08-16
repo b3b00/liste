@@ -33,27 +33,16 @@
         let displayAll : boolean = true;
 
         function updateItemsByCategory() {
-            console.log('updating items by category',$categories,$list);
             itemsByCategory = {};
             let items = $list;
             let categos = $categories;
             categos.forEach(category => {
-              console.log(`building category ${category.label}`)
               let its = items.filter(x => { 
                   let selected = x.category == category.label && (!x.done || displayAll);
-                  if (selected) {
-                    console.log(`selecting ${x.label}`);                    
-                  }
-                  else {
-                    console.log(`rejecting label:>${x.label}<`)
-                    console.log(`STATUS done:>${x.done}<  displayAll:>${displayAll}< formula:>${(!x.done || displayAll)}<`);
-                    console.log(`category:>${x.category}< // ${category.label} formula:>${x.category == category.label}<`);
-                  }
                   return selected;
                 } 
               );
                 itemsByCategory[category.label] = {color:category.color, items : its};
-                console.log('******************************');
             });
           }
 

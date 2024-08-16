@@ -26,6 +26,11 @@
         "form_factor":"narrow",
         "label":"listes",
         "src":"images/screenshot.png"
+      },
+      {
+        "form_factor":"wide",
+        "label":"listes",
+        "src":"images/screenshot.png"
       }
     ],
     "icons": [
