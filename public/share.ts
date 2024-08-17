@@ -55,9 +55,15 @@ export async function decompress(data:string ) : Promise<string> {
 }
 
 export async function shareData<T>(data:T) : Promise<string> {
+  console.log('sharing raw ',data);
   let bytes = await compress(JSON.stringify(data));
-  let b64 = encodeURIComponent(byteArrayToBase64(bytes));
+  console.log('sharing zipped',bytes);
+  const encoded = byteArrayToBase64(bytes);
+  console.log('sharing base 64 encoded : ',encoded);
+  let b64 = encodeURIComponent(encoded);
+  console.log('sharing URI encoded : ',b64);
   const url = window.location;    
   const urlified = `${url.origin}/#/share/${b64}`;
+  console.log('sharing url ',urlified);
   return urlified;
 }

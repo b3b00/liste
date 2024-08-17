@@ -16,9 +16,9 @@ import { decompress, shareData } from './share';
     onMount(async () => {
         console.log('mounting Share component')
         if (params && params.data) {
-            console.log('loading data from ',params);
-            data = params.message;
-            await loadData()
+            console.log('loading data from ',params); 
+            data = params.data;
+            await loadData();
         }
     })
 
