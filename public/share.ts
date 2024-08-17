@@ -46,7 +46,11 @@ const decompressByteArray = (byteArray: Uint8Array): Promise<string> => {
 }
 
 export async function decompress(data:string ) : Promise<string> {
-  let bytes = base64ToArray(decodeURIComponent(data));
+  console.log(`decompress : raw :: >${data}<`)
+  const uriDecoded = decodeURIComponent(data);
+  console.log(`decompress : uri decoded :: >${uriDecoded}<`)
+  let bytes = base64ToArray(uriDecoded);
+  console.log(`decompress : base64 decoded :: `,bytes);
   return decompressByteArray(bytes);
 }
 
