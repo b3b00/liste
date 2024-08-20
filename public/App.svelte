@@ -5,14 +5,16 @@
     import {push, pop, replace} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     
-    import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
+//    import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
 
     import List, {Item, Text, Separator, Subheader} from '@smui/list';
     import Button, {Label, Icon} from '@smui/button';  
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
-    
-    
+    import Drawer, {AppContent, Scrim} from '@smui/drawer';
+    import Basketoutline from "svelte-material-icons/BasketOutline.svelte";
+    import FormatListBulleted from "svelte-material-icons/FormatListBulleted.svelte";
+    import { onMount } from 'svelte';
 
     const routes = {
       '/categories': Categories,
@@ -24,7 +26,7 @@
   let drawerOpen = false;
   let satus = true;
   
-      import { onMount } from 'svelte';
+      
     
   
       onMount(async () => {        
@@ -64,7 +66,7 @@
         
         <Section align="end" toolbar>
           <IconButton on:click={() => push('/list')} toggle>
-            <Icon class="material-icons">basket_outline</Icon>
+            <Basketoutline></Basketoutline>
           </IconButton>
          
           &nbsp;
@@ -76,7 +78,7 @@
         </Section>
         <Section align="end" toolbar>
           <IconButton on:click={() => push('/categories')} toggle>
-            <Icon class="material-icons">format_list_bulleted</Icon>
+            <FormatListBulleted></FormatListBulleted>
           </IconButton>
          
           &nbsp;
@@ -137,7 +139,7 @@
       </Drawer>-->
 
   
-  <Scrim />
+  <!-- <Scrim /> -->
   <AppContent>
     <Router {routes}/>
   </AppContent>

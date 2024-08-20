@@ -12,6 +12,9 @@
     import List, { Item, Separator, Text } from '@smui/list';
     import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
+    import TrashCanOutline from "svelte-material-icons/TrashCanOutline.svelte";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
+    import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
 
     list.useLocalStorage();
     categories.useLocalStorage();
@@ -107,6 +110,7 @@
 
         function showChecked(event : {selected:boolean}) {
           $displayDoneItems = event.selected;
+          displayAll = event.selected;
           console.log(`check : ${displayAll} - ${$displayDoneItems}`);
           updateItemsByCategory();
         }
@@ -114,11 +118,19 @@
     </script>
     
     <div>
-        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>Tout effacer</Button>
-        <FormField align="end">
+        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>
+          <TrashCanOutline></TrashCanOutline>Tout effacer
+        </Button>
+{#if !displayAll} 
+<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:true})}><EyeOutline></EyeOutline>Afficher les éléments barrés</Button>
+{:else}
+<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:false})}><EyeOffOutline></EyeOffOutline>Masquer les éléments barrés</Button>
+{/if}
+
+        <!-- <FormField align="end">
             <Switch bind:checked={displayAll} on:SMUISwitch:change={(event => showChecked(event))}/>
             <span slot="label">Afficher tout.</span>
-          </FormField>
+          </FormField> -->
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
