@@ -15,6 +15,9 @@
     import TrashCanOutline from "svelte-material-icons/TrashCanOutline.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
+    import Autocomplete from '@smui-extra/autocomplete';
+    
 
     list.useLocalStorage();
     categories.useLocalStorage();
@@ -27,13 +30,15 @@
 
         let item : string = "";
 
-        let suggestions : ShopItem[];
-
         let itemCategory : string = "";
 
         let itemColor : string = "";
 
-        let menus : {[item:string]:Menu} = {}
+        let menus : {[item:string]:Menu} = {};
+
+        let suggestions : {[item:string]:string[]} = {};
+
+        let suggestionSelection : {[item:string]:string} = {};
 
 
         let displayAll : boolean = true;
@@ -52,17 +57,33 @@
             });
           }
 
+        function updateSuggestions() {
+            for(let i = 0; i < $categories.length; i++) {
+              
+              const category = $categories[i];
+              console.log(`*********** [[${category.label}]] ***********`);
+              console.log(`building suggestions for ${category.label}`);
+              const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
+              console.log('existing suggestions are ',existingSuggestions);
+              const currentItems = Object.hasOwn(itemsByCategory,category.label) ? itemsByCategory[category.label].items : []; 
+              console.log('already used items are',currentItems);
+              const filteredSuggestions = existingSuggestions.map(x=>x.label).filter(x => !currentItems.map(x => x.label).includes(x));
+              console.log('filtered suggestions are',filteredSuggestions);
+              suggestions[category.label] = filteredSuggestions;
+              console.log('**********************');
+            }
+        }  
+
         onMount(() => {
             updateItemsByCategory();
+            updateSuggestions();
         })
 
-        function closeHandler(e: CustomEvent<{ action: string }>) {
-            console.log(e);
-            if (e.detail.action === 'OK') {
-                console.log(`adding item ${item} to category ${itemCategory}`)
+        function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
+          console.log(`adding item ${itemLbl} to category ${itemCat}`)
                 let items = $list;
                 console.log('before add',$list);
-                let shopItem : ShopItem = {label : item, category : itemCategory, color :itemColor, done:false};
+                let shopItem : ShopItem = {label : itemLbl, category : itemCat, color :itemCol, done:false};
                 items.push(shopItem);
                 $list = items;
                 console.log('after add',$list);
@@ -71,16 +92,23 @@
                 console.log('manage items history',$itemsHistory);
                 let categoryHistory : ShopItem[] = []
                 let history = $itemsHistory;
-                if (Object.hasOwn(history,itemCategory)) {
-                  console.log(`found history for ${itemCategory}`,history[itemCategory])
-                  categoryHistory = history[itemCategory];
+                if (Object.hasOwn(history,itemCat)) {
+                  console.log(`found history for ${itemCat}`,history[itemCat])
+                  categoryHistory = history[itemCat];
                 }
                 categoryHistory.push(shopItem);
-                history[itemCategory] = categoryHistory;
+                history[itemCat] = categoryHistory;
                 console.log('after history :: ',history);
                 $itemsHistory = history;
                 console.log('after history (store):: ',$itemsHistory);
+                updateItemsByCategory();
+                updateSuggestions();
+        }
 
+        function closeHandler(e: CustomEvent<{ action: string }>) {
+            console.log(e);
+            if (e.detail.action === 'OK') {
+                AddOrUpdate(item,itemCategory,itemColor);
             }
             else if (e.detail.action === 'delete') {
                 let items = $list;
@@ -94,9 +122,9 @@
 
         function openEditor(itemLabel:string, category:string, color:string) {
             item = itemLabel;
-            suggestions = Object.hasOwn($itemsHistory,category) ? $itemsHistory[category] : [];
-            const currentItems = Object.hasOwn(itemsByCategory,category) ? itemsByCategory[category].items : []; 
-            suggestions = suggestions.filter(x => !currentItems.includes(x));
+            // suggestions = Object.hasOwn($itemsHistory,category) ? $itemsHistory[category] : [];
+            // const currentItems = Object.hasOwn(itemsByCategory,category) ? itemsByCategory[category].items : []; 
+            // suggestions = suggestions.filter(x => !currentItems.includes(x));
             itemCategory = category;
             itemColor = color;
             open = true;
@@ -113,6 +141,7 @@
             })
             $list = items;
             updateItemsByCategory();
+            updateSuggestions();
         }
 
         function remove(itemLabel: string) {
@@ -120,11 +149,13 @@
             items = items.filter( x => x.label !== itemLabel)
             $list = items;
             updateItemsByCategory();
+            updateSuggestions();
         }
 
         function clean() {
             $list = [];
             updateItemsByCategory();
+            updateSuggestions();
         }
 
         function showChecked(event : {selected:boolean}) {
@@ -154,8 +185,21 @@
             {#each Object.entries(itemsByCategory) as [category,content]}
 
                 <Paper square style="margin-bottom:25px">
-                    <Title on:click={() => openEditor("",category,content.color)} style="color:{content.color}">{category}</Title>
-                    <Content>                    
+                    <Title style="color:{content.color}">{category} 
+                      <Autocomplete combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
+                      <IconButton on:click={() => { 
+                          AddOrUpdate(suggestionSelection[category],category,content.color);
+                          console.log('reset suggestion selection ...')
+                          suggestionSelection[category] = "";
+                          suggestionSelection = suggestionSelection;
+                          console.log(suggestionSelection);
+                        } 
+                        }>
+                      <Check></Check>
+                      </IconButton> 
+                    </Title>
+                    <Content>
+
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
@@ -197,12 +241,12 @@
         <DialogTitle id="list-selection-title" style="color:{itemColor}">{itemCategory}</DialogTitle>
         <DialogContent id="list-selection-content">
           <Textfield bind:value={item} label="..."></Textfield>
-          {#if suggestions && suggestions.length > 0}
+          <!-- {#if suggestions && suggestions.length > 0}
             {#each suggestions as sugg}
               <Button on:click={() => {item = sugg.label;}}>{sugg.label}</Button>
               
             {/each}  
-          {/if}
+          {/if} -->
         </DialogContent>
         <Actions>
           <Button>
