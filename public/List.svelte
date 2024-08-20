@@ -2,7 +2,7 @@
 
     import Dialog, { Title as DialogTitle, Content as DialogContent, Actions, InitialFocus } from '@smui/dialog';
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems } from './store';
+    import { list, categories, displayDoneItems, items as itemsHistory } from './store';
     import {ShopItem} from './model';
     import Paper, { Title, Subtitle, Content } from '@smui/paper';    
     import Textfield from '@smui/textfield';
@@ -19,6 +19,7 @@
     list.useLocalStorage();
     categories.useLocalStorage();
     displayDoneItems.useLocalStorage();
+    itemsHistory.useLocalStorage();
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
    
@@ -65,6 +66,15 @@
                 console.log('after add',$list);
                 updateItemsByCategory();
                 $categories = $categories;
+                let categoryHistory : ShopItem[] = []
+                let history = $itemsHistory;
+                if (Object.hasOwn(history,itemCategory)) {
+                  categoryHistory = history[itemCategory];
+                }
+                categoryHistory.push(shopItem);
+                history[itemCategory] = categoryHistory;
+                $itemsHistory = history;
+
             }
             else if (e.detail.action === 'delete') {
                 let items = $list;
