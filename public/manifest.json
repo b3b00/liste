@@ -11,6 +11,7 @@
     "background_color": "#00a2dd",
     "background-color": "#00a2dd",
     "orientation": "portrait-primary",
+    "prefer_related_applications":false,
     "screenshots": [
       {
         "form_factor":"narrow",
