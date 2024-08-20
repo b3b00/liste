@@ -31,20 +31,9 @@ const createWritableStore = <T>(key:string, startValue:T) => {
 
   export const list = createWritableStore<ShopItem[]>('list',JSON.parse('[]'));
 
-  export const items = createWritableStore<{[category:string]:ShopItem[]}>('items',JSON.parse('[]'));
+  export const itemsHistory = createWritableStore<{[category:string]:ShopItem[]}>('itemsHistory',JSON.parse('{}'));
 
   export const displayDoneItems = createWritableStore<boolean|undefined>('displayDoneItems',true);
-
-  export const getItems = (category:string) : ShopItem[] => {
-    let itemsForCategory:ShopItem[] = []
-    items.update(r => {
-        if (Object.hasOwn(r,category)) {
-            itemsForCategory = r[category];
-        }
-        return r;
-    })
-    return itemsForCategory;
-  }
 
   
   

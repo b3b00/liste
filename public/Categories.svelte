@@ -8,7 +8,7 @@
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
-    import {categories, list, items as history} from './store';
+    import {categories, list, itemsHistory} from './store';
     import {Category} from './model';
     import { action } from "@smui/icon-button/src/IconButton.svelte"
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
@@ -16,7 +16,7 @@
     
     categories.useLocalStorage();
     list.useLocalStorage();
-    history.useLocalStorage();
+    itemsHistory.useLocalStorage();
 
     let open : boolean = false;
 
@@ -45,10 +45,11 @@
                         return x;
                     });
                     $list = currentList;
-                    let currentHistory = $history;
+                    let currentHistory = $itemsHistory;
                     if (Object.hasOwn(currentHistory,oldCategoryLabel)) {
                         currentHistory[categoryLabel] = currentHistory[oldCategoryLabel];
                         delete currentHistory[oldCategoryLabel];
+                        $itemsHistory = currentHistory;
                     }
                 }
 
@@ -61,12 +62,12 @@
                         return x;
                     });
                     $list = currentList;
-                    let currentHistory = $history;
+                    let currentHistory = $itemsHistory;
                     if (Object.hasOwn(currentHistory,oldCategoryLabel)) {
                         currentHistory[categoryLabel] = currentHistory[oldCategoryLabel];
                         currentHistory[categoryLabel] = currentHistory[categoryLabel].map(x => {x.category = categoryLabel; return x});
                         delete currentHistory[oldCategoryLabel];
-                        $history = currentHistory;
+                        $itemsHistory = currentHistory;
                     }
                 }
 
@@ -79,11 +80,11 @@
                         return x;
                     });
                     $list = currentList;
-                    let currentHistory = $history;
+                    let currentHistory = $itemsHistory;
                     if (Object.hasOwn(currentHistory,categoryLabel)) {                        
                         currentHistory[categoryLabel] = currentHistory[categoryLabel].map(x => {x.color = categoryColor; return x});                        
                     }
-                    $history = currentHistory;
+                    $itemsHistory = currentHistory;
                 }
 
                 categos = categos.map(x => {

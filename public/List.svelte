@@ -2,7 +2,7 @@
 
     import Dialog, { Title as DialogTitle, Content as DialogContent, Actions, InitialFocus } from '@smui/dialog';
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, items as itemsHistory } from './store';
+    import { list, categories, displayDoneItems, itemsHistory } from './store';
     import {ShopItem} from './model';
     import Paper, { Title, Subtitle, Content } from '@smui/paper';    
     import Textfield from '@smui/textfield';
@@ -26,6 +26,8 @@
         let open: boolean = false;
 
         let item : string = "";
+
+        let suggestions : ShopItem[];
 
         let itemCategory : string = "";
 
@@ -66,14 +68,18 @@
                 console.log('after add',$list);
                 updateItemsByCategory();
                 $categories = $categories;
+                console.log('manage items history',$itemsHistory);
                 let categoryHistory : ShopItem[] = []
                 let history = $itemsHistory;
                 if (Object.hasOwn(history,itemCategory)) {
+                  console.log(`found history for ${itemCategory}`,history[itemCategory])
                   categoryHistory = history[itemCategory];
                 }
                 categoryHistory.push(shopItem);
                 history[itemCategory] = categoryHistory;
+                console.log('after history :: ',history);
                 $itemsHistory = history;
+                console.log('after history (store):: ',$itemsHistory);
 
             }
             else if (e.detail.action === 'delete') {
@@ -88,6 +94,9 @@
 
         function openEditor(itemLabel:string, category:string, color:string) {
             item = itemLabel;
+            suggestions = Object.hasOwn($itemsHistory,category) ? $itemsHistory[category] : [];
+            const currentItems = Object.hasOwn(itemsByCategory,category) ? itemsByCategory[category].items : []; 
+            suggestions = suggestions.filter(x => !currentItems.includes(x));
             itemCategory = category;
             itemColor = color;
             open = true;
@@ -188,7 +197,12 @@
         <DialogTitle id="list-selection-title" style="color:{itemColor}">{itemCategory}</DialogTitle>
         <DialogContent id="list-selection-content">
           <Textfield bind:value={item} label="..."></Textfield>
-          
+          {#if suggestions && suggestions.length > 0}
+            {#each suggestions as sugg}
+              <Button on:click={() => {item = sugg.label;}}>{sugg.label}</Button>
+              
+            {/each}  
+          {/if}
         </DialogContent>
         <Actions>
           <Button>
