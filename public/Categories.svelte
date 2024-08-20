@@ -1,16 +1,13 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import Dialog, { Title, Content, Actions, InitialFocus } from '@smui/dialog';
-    import List, { Item, Graphic, Text } from '@smui/list';
-    import Radio from '@smui/radio';
+    import Dialog, { Title, Content, Actions } from '@smui/dialog';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
     import {categories, list, itemsHistory} from './store';
     import {Category} from './model';
-    import { action } from "@smui/icon-button/src/IconButton.svelte"
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     
@@ -93,7 +90,7 @@
                         return category;
                     }
                     return x;
-                })                
+                })
                 $categories = categos;
                 oldCategoryColor = "#000000";
                 oldCategoryLabel = "";
@@ -127,15 +124,12 @@
         }
     }
 
-    //var picker = document.getElementById('picker') // get the color picker element
     function colorChanged (event) {
         console.log('color change : ',event);
         var color = event.detail[0]; // get the color
         console.log('Selected Color:' + color);
-        //picker.value = color; // set the value of the picker to the selected color        
         categoryColor = color;
     }
-    //picker.addEventListener('change', colorChanged) // add the event to the picker element
 
     function openEditor(edition:boolean, label:string, color:string) {
         console.log(`open editor ${edition}  - ${label} - ${color}`)
@@ -148,28 +142,19 @@
     }
 
     function up(index:number, category:Category) {
-        console.log(`UP @${index} : ${category.label} `,category);
         let items = $categories;
-        console.log('UP categories :: ',items);
         let prev = items[index-1];
-        console.log('UP prev :: ',prev)
         items[index-1] = category;
         items[index] = prev;
-        console.log('after swap :: ',items);
-
         $categories = items;
 
     }
 
     function down(index:number, category:Category) {
-        console.log(`DOWN @${index} : ${category.label} `,category);
         let items = $categories;
         let next = items[index+1];
-
-        
         items[index+1] = category;
         items[index] = next;
-
         $categories = items;
     }
 
@@ -211,9 +196,9 @@
             {#if i < $categories.length-1}
             <Button on:click={() => down(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronDown width="2em" height="2em" color="black"></ChevronDown></Button>
             {/if}
-            <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color};flex-grow:15" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
+            <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color};flex-grow:15" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>
             {#if i > 0}
-            <Button on:click={() => up(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronUp width="2em" height="2em" color="black"></ChevronUp></Button>            
+            <Button on:click={() => up(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronUp width="2em" height="2em" color="black"></ChevronUp></Button>
             {/if}
         </div>
     {/each}

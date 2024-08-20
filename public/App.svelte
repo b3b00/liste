@@ -2,17 +2,13 @@
   
     import Categories from "./Categories.svelte";
     import ShopList from "./List.svelte";    
-    import {push, pop, replace} from 'svelte-spa-router'
+    import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
-    
-//    import Drawer, {AppContent, Content, Header, Title, Subtitle, Scrim} from '@smui/drawer';
-
-    import List, {Item, Text, Separator, Subheader} from '@smui/list';
-    import Button, {Label, Icon} from '@smui/button';  
+    import Button, {Label} from '@smui/button';  
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
-    import Drawer, {AppContent, Scrim} from '@smui/drawer';
-    import Basketoutline from "svelte-material-icons/BasketOutline.svelte";
+    import {AppContent} from '@smui/drawer';
+    import Cart from "svelte-material-icons/Cart.svelte";
     import FormatListBulleted from "svelte-material-icons/FormatListBulleted.svelte";
     import { onMount } from 'svelte';
 
@@ -22,24 +18,9 @@
       '/': ShopList,
   }
   
-  let drawer;
-  let drawerOpen = false;
-  let satus = true;
-  
-      
-    
-  
-      onMount(async () => {        
-          });
-  
-  
-  function toggleDrawer() {
-    console.log(`toggling drawer ${open} -> ${!open}`);
-    open = ! open;
-  }
-  
+      onMount(async () => {});
 
-  
+
   let prominent = false;
     let dense = true;
     let secondaryColor = false;
@@ -66,7 +47,7 @@
         
         <Section align="end" toolbar>
           <IconButton on:click={() => push('/list')} toggle>
-            <Basketoutline></Basketoutline>
+            <Cart></Cart>
           </IconButton>
          
           &nbsp;
@@ -80,66 +61,13 @@
           <IconButton on:click={() => push('/categories')} toggle>
             <FormatListBulleted></FormatListBulleted>
           </IconButton>
-         
           &nbsp;
-         
-          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
           <Button on:click={() => push('/categories')}>
             <Label>Catégories</Label>
           </Button>
-
-          <!-- <a href="#/categories"><IconButton Catégories</a> -->
         </Section>
       </Row>
     </TopAppBar>
-    <!--<Drawer variant="modal" bind:open>
-        <Header>
-          <Title>Drawer</Title>          
-        </Header>
-        <Content>
-          <List>
-            <Item
-          href="javascript:void(0)"
-          on:click={() => setActive('Inbox')}
-          activated={active === 'Inbox'}
-        >
-          <Icon class="material-icons" aria-hidden="true">inbox</Icon>
-          <Text>Inbox</Text>
-        </Item>
-            <Item
-              href="javascript:void(0)"
-              on:click={() => setActive('A Space Rocket')}
-              activated={active === 'A Space Rocket'}
-            >
-              <Text>A Space Rocket</Text>
-            </Item>
-            <Item
-              href="javascript:void(0)"
-              on:click={() => setActive('100 Pounds of Gravel')}
-              activated={active === '100 Pounds of Gravel'}
-            >
-              <Text>100 Pounds of Gravel</Text>
-            </Item>
-            <Item
-              href="javascript:void(0)"
-              on:click={() => setActive('All of the Shrimp')}
-              activated={active === 'All of the Shrimp'}
-            >
-              <Text>All of the Shrimp</Text>
-            </Item>
-            <Item
-              href="javascript:void(0)"
-              on:click={() => setActive('A Planet with a Mall')}
-              activated={active === 'A Planet with a Mall'}
-            >
-              <Text>A Planet with a Mall</Text>
-            </Item>
-          </List>
-        </Content>
-      </Drawer>-->
-
-  
-  <!-- <Scrim /> -->
   <AppContent>
     <Router {routes}/>
   </AppContent>
