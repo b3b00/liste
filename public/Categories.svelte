@@ -11,6 +11,8 @@
     import {categories} from './store';
     import {Category} from './model';
     import { action } from "@smui/icon-button/src/IconButton.svelte"
+    import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     
     categories.useLocalStorage();
 
@@ -91,6 +93,29 @@
         open = true;
     }
 
+    function up(index:number, category:Category) {
+        console.log(`UP @${index} : ${category.label} `);
+        let items = $categories;
+        let prev = items[index-1];
+        
+        items[index-1] = category;
+        items[index] = prev;
+
+        $categories = items;
+
+    }
+
+    function down(index:number, category:Category) {
+        console.log(`DOWN @${index} : ${category.label} `);
+        let items = $categories;
+        let next = items[index+1];
+        
+        items[index+1] = category;
+        items[index] = next;
+
+        $categories = items;
+    }
+
     </script>
     
     <div>
@@ -122,13 +147,14 @@
   </Actions>
 </Dialog>
 
-<Button on:click={() => { openEditor(false,"","#000000");} }>
-  <Label>Ajouter</Label>
-</Button>
-
 <div style="display:flex;flex-direction: column;">
-    {#each $categories as category}
-        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
+    
+    {#each $categories as category, i (i)}
+        <div style="display:flex;flex-direction: row; width:100%">
+            <Button on:on:click={() => down(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronUp width="2em" height="2em" color="black"></ChevronUp></Button>
+            <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color};flex-grow:15" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
+            <Button on:on:click={() => up(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronDown width="2em" height="2em" color="black"></ChevronDown></Button>
+        </div>
     {/each}
     <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => { openEditor(false,"","#000000");} }>Nouvelle catégorie...</Button>
 </div>
