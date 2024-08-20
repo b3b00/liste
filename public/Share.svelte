@@ -3,7 +3,7 @@
 import { onMount } from "svelte";
 import {categories, items, list} from './store';
 import {ShopItem, Category, ShareData} from './model';
-import { decompress, shareData } from './share';
+import { decompress, importData, shareData } from './share';
 
     export let params;
 
@@ -25,10 +25,12 @@ import { decompress, shareData } from './share';
     async function loadData() {
         // TODO : decode data to json string
         console.log(`importing data from >${data}<`)
-        let shareData:ShareData = JSON.parse(await decompress(data));
+        let shareData:ShareData = importData(data);
         console.log('decode data is ',shareData);
-        // $categories = shareData.categories;
-        // $list = shareData.list;
+        categoriesCount = shareData.categories.length;
+        itemsCount = shareData.list.length;
+        $categories = shareData.categories;
+        $list = shareData.list;
     }
 
 </script>

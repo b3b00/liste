@@ -18,7 +18,7 @@
 
 
     import { ShareData } from "./model";
-    import {shareData } from './share';
+    import {importData, exportData } from './share';
     
     categories.useLocalStorage();
     list.useLocalStorage();
@@ -49,7 +49,7 @@
 
   async function share() {
     let data:ShareData = {"categories":$categories,"list":$list};
-    let url = await shareData(data);
+    let url = exportData(data);
     navigator.clipboard.writeText(url);
   }
 

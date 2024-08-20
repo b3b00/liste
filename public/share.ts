@@ -1,3 +1,4 @@
+import{ShareData} from './model';
 
 function base64ToArray(content:string):Uint8Array {
     let byteArrayAsString = atob(content);
@@ -24,6 +25,22 @@ function byteArrayToBase64(buffer: ArrayBuffer): string {
   return window.btoa( binary );
 }
 
+
+export function exportData(shareData : ShareData): string {
+  const raw = JSON.stringify(shareData);
+  const base64 = btoa(raw);
+  const slug = encodeURIComponent(base64);
+  const url = window.location;    
+  const urlified = `${url.origin}/#/share/${slug}`;
+  return urlified;
+}
+
+export function importData(raw: string) : ShareData {
+  const base64 = decodeURIComponent(raw);
+  const json = atob(base64);
+  const data: ShareData = JSON.parse(json);
+  return data;
+}
 
 
 
