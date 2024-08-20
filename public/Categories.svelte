@@ -1,18 +1,19 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import Dialog, { Title, Content, Actions, InitialFocus } from '@smui/dialog';
-    import List, { Item, Graphic, Text } from '@smui/list';
-    import Radio from '@smui/radio';
+    import Dialog, { Title, Content, Actions } from '@smui/dialog';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
-    import {categories} from './store';
+    import {categories, list, itemsHistory} from './store';
     import {Category} from './model';
-    import { action } from "@smui/icon-button/src/IconButton.svelte"
+    import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     
     categories.useLocalStorage();
+    list.useLocalStorage();
+    itemsHistory.useLocalStorage();
 
     let open : boolean = false;
 
@@ -31,13 +32,65 @@
             if (editionMode) {
                 console.log(`edit a category ${oldCategoryLabel}->${categoryLabel}:${oldCategoryColor}->${categoryColor}`);
                 let categos = $categories;
+
+                if (oldCategoryColor !== categoryLabel) {
+                    let currentList = $list;
+                    currentList = currentList.map(x => {
+                        if (x.category == oldCategoryLabel) {
+                            x.category = categoryLabel
+                        }
+                        return x;
+                    });
+                    $list = currentList;
+                    let currentHistory = $itemsHistory;
+                    if (Object.hasOwn(currentHistory,oldCategoryLabel)) {
+                        currentHistory[categoryLabel] = currentHistory[oldCategoryLabel];
+                        delete currentHistory[oldCategoryLabel];
+                        $itemsHistory = currentHistory;
+                    }
+                }
+
+                if (oldCategoryLabel !== categoryLabel) {
+                    let currentList = $list;
+                    currentList = currentList.map(x => {
+                        if (x.category == oldCategoryLabel) {
+                            x.category = categoryLabel
+                        }
+                        return x;
+                    });
+                    $list = currentList;
+                    let currentHistory = $itemsHistory;
+                    if (Object.hasOwn(currentHistory,oldCategoryLabel)) {
+                        currentHistory[categoryLabel] = currentHistory[oldCategoryLabel];
+                        currentHistory[categoryLabel] = currentHistory[categoryLabel].map(x => {x.category = categoryLabel; return x});
+                        delete currentHistory[oldCategoryLabel];
+                        $itemsHistory = currentHistory;
+                    }
+                }
+
+                if (oldCategoryColor !== categoryColor) {
+                    let currentList = $list;
+                    currentList = currentList.map(x => {
+                        if (x.category == categoryLabel) {
+                            x.color = categoryColor;
+                        }
+                        return x;
+                    });
+                    $list = currentList;
+                    let currentHistory = $itemsHistory;
+                    if (Object.hasOwn(currentHistory,categoryLabel)) {                        
+                        currentHistory[categoryLabel] = currentHistory[categoryLabel].map(x => {x.color = categoryColor; return x});                        
+                    }
+                    $itemsHistory = currentHistory;
+                }
+
                 categos = categos.map(x => {
                     if (x.label == oldCategoryLabel) {
                         let category:Category = {label:categoryLabel,color:categoryColor};
                         return category;
                     }
                     return x;
-                })                
+                })
                 $categories = categos;
                 oldCategoryColor = "#000000";
                 oldCategoryLabel = "";
@@ -71,15 +124,12 @@
         }
     }
 
-    //var picker = document.getElementById('picker') // get the color picker element
     function colorChanged (event) {
         console.log('color change : ',event);
         var color = event.detail[0]; // get the color
         console.log('Selected Color:' + color);
-        //picker.value = color; // set the value of the picker to the selected color        
         categoryColor = color;
     }
-    //picker.addEventListener('change', colorChanged) // add the event to the picker element
 
     function openEditor(edition:boolean, label:string, color:string) {
         console.log(`open editor ${edition}  - ${label} - ${color}`)
@@ -89,6 +139,23 @@
         oldCategoryLabel = label;
         categoryLabel = label;
         open = true;
+    }
+
+    function up(index:number, category:Category) {
+        let items = $categories;
+        let prev = items[index-1];
+        items[index-1] = category;
+        items[index] = prev;
+        $categories = items;
+
+    }
+
+    function down(index:number, category:Category) {
+        let items = $categories;
+        let next = items[index+1];
+        items[index+1] = category;
+        items[index] = next;
+        $categories = items;
     }
 
     </script>
@@ -122,13 +189,18 @@
   </Actions>
 </Dialog>
 
-<Button on:click={() => { openEditor(false,"","#000000");} }>
-  <Label>Ajouter</Label>
-</Button>
-
 <div style="display:flex;flex-direction: column;">
-    {#each $categories as category}
-        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color}" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>         
+    
+    {#each $categories as category, i (i)}
+        <div style="display:flex;flex-direction: row; width:100%">
+            {#if i < $categories.length-1}
+            <Button on:click={() => down(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronDown width="2em" height="2em" color="black"></ChevronDown></Button>
+            {/if}
+            <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color};flex-grow:15" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>
+            {#if i > 0}
+            <Button on:click={() => up(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronUp width="2em" height="2em" color="black"></ChevronUp></Button>
+            {/if}
+        </div>
     {/each}
     <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => { openEditor(false,"","#000000");} }>Nouvelle catégorie...</Button>
 </div>

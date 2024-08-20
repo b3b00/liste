@@ -1,19 +1,17 @@
 
 
-const CACHE_NAME = "liste-v0.0.1";
+const CACHE_NAME = "liste-v0.0.2";
 
 const urlsToCache = [
   "./",
   "./index.html",
   "./bundle.css",
-  "./bundle.js",  
+  "./bundle.js",
+  "./images/icons/icon-48x48.png",
   "./images/icons/icon-72x72.png",
-  "./images/icons/icon-96x96.png",
-  "./images/icons/icon-128x128.png",
-  "./images/icons/icon-144x144.png",
-  "./images/icons/icon-152x152.png",
-  "./images/icons/icon-192x192.png",
-  "./images/icons/icon-384x384.png",
+  "./images/icons/icon-96x96.png",  
+  "./images/icons/icon-144x144.png",  
+  "./images/icons/icon-192x192.png",  
   "./images/icons/icon-512x512.png",
   "./images/screenshot.png",
   "https://fonts.googleapis.com/icon?family=Material+Icons",

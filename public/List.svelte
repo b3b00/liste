@@ -1,21 +1,24 @@
 <script lang="ts">
 
-    import Dialog, { Title as DialogTitle, Content as DialogContent, Actions, InitialFocus } from '@smui/dialog';
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems } from './store';
+    import { list, categories, displayDoneItems, itemsHistory } from './store';
     import {ShopItem} from './model';
-    import Paper, { Title, Subtitle, Content } from '@smui/paper';    
-    import Textfield from '@smui/textfield';
+    import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
     import Button, { Group, GroupItem, Label, Icon } from '@smui/button';
     import Menu from '@smui/menu';
-    import List, { Item, Separator, Text } from '@smui/list';
-    import Switch from '@smui/switch';
-    import FormField from '@smui/form-field';
+    import List, { Item, Text } from '@smui/list';
+    import TrashCanOutline from "svelte-material-icons/TrashCanOutline.svelte";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
+    import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
+    import Autocomplete from '@smui-extra/autocomplete';
+    
 
     list.useLocalStorage();
     categories.useLocalStorage();
     displayDoneItems.useLocalStorage();
+    itemsHistory.useLocalStorage();
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
    
@@ -27,7 +30,11 @@
 
         let itemColor : string = "";
 
-        let menus : {[item:string]:Menu} = {}
+        let menus : {[item:string]:Menu} = {};
+
+        let suggestions : {[item:string]:string[]} = {};
+
+        let suggestionSelection : {[item:string]:string} = {};
 
 
         let displayAll : boolean = true;
@@ -46,38 +53,42 @@
             });
           }
 
+        function updateSuggestions() {
+            for(let i = 0; i < $categories.length; i++) {
+              const category = $categories[i];
+              const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
+              const currentItems = Object.hasOwn(itemsByCategory,category.label) ? itemsByCategory[category.label].items : []; 
+              const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
+              suggestions[category.label] = filteredSuggestions;
+            }
+        }  
+
         onMount(() => {
             updateItemsByCategory();
+            updateSuggestions();
         })
 
-        function closeHandler(e: CustomEvent<{ action: string }>) {
-            console.log(e);
-            if (e.detail.action === 'OK') {
-                console.log(`adding item ${item} to category ${itemCategory}`)
+        function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
+          if (!itemLbl || itemLbl == undefined || itemLbl === null || itemLbl === '') {
+            return;
+          }
                 let items = $list;
-                console.log('before add',$list);
-                let shopItem : ShopItem = {label : item, category : itemCategory, color :itemColor, done:false};
+                let shopItem : ShopItem = {label : itemLbl, category : itemCat, color :itemCol, done:false};
                 items.push(shopItem);
                 $list = items;
-                console.log('after add',$list);
                 updateItemsByCategory();
                 $categories = $categories;
-            }
-            else if (e.detail.action === 'delete') {
-                let items = $list;
-                $list = items.filter(x => x.label !== item);
+                let categoryHistory : string[] = []
+                let history = $itemsHistory;
+                if (Object.hasOwn(history,itemCat)) {
+                  categoryHistory = history[itemCat];
+                }
+                categoryHistory.push(shopItem.label);
+                categoryHistory = [...new Set(categoryHistory)];
+                history[itemCat] = categoryHistory;
+                $itemsHistory = history;
                 updateItemsByCategory();
-            }
-            else {
-                console.log(`cancel item`)            
-            }
-        }
-
-        function openEditor(itemLabel:string, category:string, color:string) {
-            item = itemLabel;
-            itemCategory = category;
-            itemColor = color;
-            open = true;
+                updateSuggestions();
         }
 
         function shop(itemLabel: string) {
@@ -91,6 +102,7 @@
             })
             $list = items;
             updateItemsByCategory();
+            updateSuggestions();
         }
 
         function remove(itemLabel: string) {
@@ -98,15 +110,18 @@
             items = items.filter( x => x.label !== itemLabel)
             $list = items;
             updateItemsByCategory();
+            updateSuggestions();
         }
 
         function clean() {
             $list = [];
             updateItemsByCategory();
+            updateSuggestions();
         }
 
         function showChecked(event : {selected:boolean}) {
           $displayDoneItems = event.selected;
+          displayAll = event.selected;
           console.log(`check : ${displayAll} - ${$displayDoneItems}`);
           updateItemsByCategory();
         }
@@ -114,17 +129,34 @@
     </script>
     
     <div>
-        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>Tout effacer</Button>
-        <FormField align="end">
-            <Switch bind:checked={displayAll} on:SMUISwitch:change={(event => showChecked(event))}/>
-            <span slot="label">Afficher tout.</span>
-          </FormField>
+        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>
+          <TrashCanOutline></TrashCanOutline>Tout effacer
+        </Button>
+{#if !displayAll} 
+<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:true})}><EyeOutline></EyeOutline>Afficher les éléments barrés</Button>
+{:else}
+<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:false})}><EyeOffOutline></EyeOffOutline>Masquer les éléments barrés</Button>
+{/if}
+
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
                 <Paper square style="margin-bottom:25px">
-                    <Title on:click={() => openEditor("",category,content.color)} style="color:{content.color}">{category}</Title>
-                    <Content>                    
+                    <Title style="color:{content.color}">{category} 
+                      <Autocomplete combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
+                      <IconButton on:click={() => { 
+                          AddOrUpdate(suggestionSelection[category],category,content.color);
+                          console.log('reset suggestion selection ...')
+                          suggestionSelection[category] = "";
+                          suggestionSelection = suggestionSelection;
+                          console.log(suggestionSelection);
+                        } 
+                        }>
+                      <Check></Check>
+                      </IconButton> 
+                    </Title>
+                    <Content>
+
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
@@ -154,32 +186,4 @@
                 </Paper>
             {/each}
         {/if}
-
-
-        <Dialog
-        bind:open
-        selection
-        aria-labelledby="list-selection-title"
-        aria-describedby="list-selection-content"
-        on:SMUIDialog:closed={closeHandler}
-      >
-        <DialogTitle id="list-selection-title" style="color:{itemColor}">{itemCategory}</DialogTitle>
-        <DialogContent id="list-selection-content">
-          <Textfield bind:value={item} label="..."></Textfield>
-          
-        </DialogContent>
-        <Actions>
-          <Button>
-            <Label>Annuler</Label>
-          </Button>
-          <Button action="delete">
-              <label>Supprimer</label> 
-          </Button>
-          <Button action="OK">
-            <Label>OK</Label>
-          </Button>
-        </Actions>
-      </Dialog>
-
-
     </div>

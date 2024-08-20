@@ -1,5 +1,3 @@
-import Menu from '@smui/menu';
-
 export interface Category {
     label : string,
     color : string,
