@@ -67,7 +67,7 @@
               console.log('existing suggestions are ',existingSuggestions);
               const currentItems = Object.hasOwn(itemsByCategory,category.label) ? itemsByCategory[category.label].items : []; 
               console.log('already used items are',currentItems);
-              const filteredSuggestions = existingSuggestions.map(x=>x.label).filter(x => !currentItems.map(x => x.label).includes(x));
+              const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
               console.log('filtered suggestions are',filteredSuggestions);
               suggestions[category.label] = filteredSuggestions;
               console.log('**********************');
@@ -80,6 +80,9 @@
         })
 
         function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
+          if (!itemLbl || itemLbl == undefined || itemLbl === null || itemLbl === '') {
+            return;
+          }
           console.log(`adding item ${itemLbl} to category ${itemCat}`)
                 let items = $list;
                 console.log('before add',$list);
@@ -90,13 +93,14 @@
                 updateItemsByCategory();
                 $categories = $categories;
                 console.log('manage items history',$itemsHistory);
-                let categoryHistory : ShopItem[] = []
+                let categoryHistory : string[] = []
                 let history = $itemsHistory;
                 if (Object.hasOwn(history,itemCat)) {
                   console.log(`found history for ${itemCat}`,history[itemCat])
                   categoryHistory = history[itemCat];
                 }
-                categoryHistory.push(shopItem);
+                categoryHistory.push(shopItem.label);
+                categoryHistory = [...new Set(categoryHistory)];
                 history[itemCat] = categoryHistory;
                 console.log('after history :: ',history);
                 $itemsHistory = history;

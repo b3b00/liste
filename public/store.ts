@@ -31,7 +31,7 @@ const createWritableStore = <T>(key:string, startValue:T) => {
 
   export const list = createWritableStore<ShopItem[]>('list',JSON.parse('[]'));
 
-  export const itemsHistory = createWritableStore<{[category:string]:ShopItem[]}>('itemsHistory',JSON.parse('{}'));
+  export const itemsHistory = createWritableStore<{[category:string]:string[]}>('itemsHistory',JSON.parse('{}'));
 
   export const displayDoneItems = createWritableStore<boolean|undefined>('displayDoneItems',true);
 
