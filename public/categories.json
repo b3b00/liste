@@ -1,0 +1,6 @@
+[
+    { "label": "liquide", "color": "#18ffff" },
+    { "label": "viande", "color": "#d50000" },
+    { "label": "fruits et lègumes", "color": "#64dd17" },
+    { "label": "droguerie", "color": "#aa00ff" }
+]

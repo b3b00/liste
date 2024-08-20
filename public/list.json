@@ -1,0 +1,98 @@
+[
+    {
+        "label": "eau",
+        "category": "liquide",
+        "color": "#18ffff",
+        "done": false
+    },
+    {
+        "label": "bière",
+        "category": "liquide",
+        "color": "#18ffff",
+        "done": false
+    },
+    {
+        "label": "jus d'abricot",
+        "category": "liquide",
+        "color": "#18ffff",
+        "done": false
+    },
+    {
+        "label": "steak",
+        "category": "viande",
+        "color": "#d50000",
+        "done": false
+    },
+    {
+        "label": "dinde",
+        "category": "viande",
+        "color": "#d50000",
+        "done": false
+    },
+    {
+        "label": "poulet",
+        "category": "viande",
+        "color": "#d50000",
+        "done": false
+    },
+    {
+        "label": "porc",
+        "category": "viande",
+        "color": "#d50000",
+        "done": false
+    },
+    {
+        "label": "lapin",
+        "category": "viande",
+        "color": "#d50000",
+        "done": false
+    },
+    {
+        "label": "poireaux",
+        "category": "fruits et lègumes",
+        "color": "#64dd17",
+        "done": false
+    },
+    {
+        "label": "patates",
+        "category": "fruits et lègumes",
+        "color": "#64dd17",
+        "done": false
+    },
+    {
+        "label": "haricots verts",
+        "category": "fruits et lègumes",
+        "color": "#64dd17",
+        "done": false
+    },
+    {
+        "label": "rutabaga",
+        "category": "fruits et lègumes",
+        "color": "#64dd17",
+        "done": false
+    },
+    {
+        "label": "WD40",
+        "category": "droguerie",
+        "color": "#aa00ff",
+        "done": false
+    },
+    {
+        "label": "Destop",
+        "category": "droguerie",
+        "color": "#aa00ff",
+        "done": false
+    },
+    {
+        "label": "Papier",
+        "category": "droguerie",
+        "color": "#aa00ff",
+        "done": false
+    },
+    {
+        "label": "agrafeuse",
+        "category": "droguerie",
+        "color": "#aa00ff",
+        "done": false
+    }
+]

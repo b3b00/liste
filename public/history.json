@@ -1,0 +1,6 @@
+{
+    "liquide": ["eau", "bière", "jus d'abricot"],
+    "viande": ["steak", "dinde", "poulet", "porc", "lapin"],
+    "fruits et lègumes": ["poireaux", "patates", "haricots verts", "rutabaga"],
+    "droguerie": ["WD40", "Destop", "Papier", "agrafeuse"]
+}
