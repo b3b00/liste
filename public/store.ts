@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { Category, ShopItem } from './model';
+import { Category, ListMode, ShopItem } from './model';
 
 
 const createWritableStore = <T>(key:string, startValue:T) => {
@@ -34,6 +34,8 @@ const createWritableStore = <T>(key:string, startValue:T) => {
   export const itemsHistory = createWritableStore<{[category:string]:string[]}>('itemsHistory',JSON.parse('{}'));
 
   export const displayDoneItems = createWritableStore<boolean|undefined>('displayDoneItems',true);
+
+  export const listMode = writable<ListMode>(ListMode.Edit);
 
   
   

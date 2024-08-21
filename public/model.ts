@@ -11,3 +11,8 @@ export interface ShopItem {
     color: string,
     done : boolean,
 }
+
+export enum ListMode {
+    Shop,
+    Edit
+}
