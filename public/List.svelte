@@ -141,7 +141,7 @@
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
 
-                <Paper square style="margin-bottom:25px">
+                <Paper square style="margin-bottom:25px" variant="outlined">
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">{category} 
                       <Autocomplete combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
