@@ -1,6 +1,6 @@
 
 
-const CACHE_NAME = "liste-v0.0.3";
+const CACHE_NAME = "liste-v0.0.6";
 
 const urlsToCache = [
   "./",
@@ -20,6 +20,8 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', function(event) {
+  console.log('service worker install',event);
+  self.skipWaiting();
   // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
