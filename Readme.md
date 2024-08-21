@@ -1,4 +1,4 @@
-# typescript template for cloudflare pages
+# shopping list
 
 ## how to use
 
