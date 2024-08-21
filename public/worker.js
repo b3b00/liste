@@ -20,7 +20,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', function(event) {
-  console.log('service worker install',event);
+  // skipwaiting to avoid the double reload before update get up (see https://web.dev/articles/service-worker-lifecycle?hl=fr#skip_the_waiting_phase)
   self.skipWaiting();
   // Perform install steps
   event.waitUntil(
