@@ -1,8 +1,8 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, itemsHistory } from './store';
-    import {ShopItem} from './model';
+    import { list, categories, displayDoneItems, itemsHistory, listMode } from './store';
+    import {ListMode, ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
     import Button, { Group, GroupItem, Label, Icon } from '@smui/button';
@@ -36,6 +36,9 @@
 
         let suggestionSelection : {[item:string]:string} = {};
 
+        export let params : {[key:string]:string} = {};
+
+        let mode : ListMode = ListMode.Edit;
 
         let displayAll : boolean = true;
 
@@ -148,6 +151,7 @@
                         <Text>
                       {category} 
                     </Text>
+                    {#if $listMode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
@@ -162,6 +166,7 @@
                       <Check></Check>
                       </IconButton> 
                     </div>
+                    {/if}
                   </div>
                     </Title>
                     <Content>

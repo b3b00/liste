@@ -10,7 +10,10 @@
     import {AppContent} from '@smui/drawer';
     import Cart from "svelte-material-icons/Cart.svelte";
     import FormatListBulleted from "svelte-material-icons/FormatListBulleted.svelte";
+    import Pen from "svelte-material-icons/Pen.svelte";
     import { onMount } from 'svelte';
+    import { ListMode } from "./model"
+    import { listMode } from "./store";
 
     const routes = {
       '/categories': Categories,
@@ -41,20 +44,24 @@
       color={secondaryColor ? 'secondary' : 'primary'}
     >
       <Row>
-        <Section>          
-         
-        </Section>
-        
         <Section align="end" toolbar>
-          <IconButton on:click={() => push('/list')} toggle>
+          <IconButton on:click={() => {$listMode = ListMode.Edit; push('/list');} } toggle>
+            <Pen></Pen>
+          </IconButton>
+          &nbsp;
+          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
+          <Button on:click={() => {$listMode = ListMode.Edit; push('/list');} }>
+            <Label>Édition</Label>
+          </Button>
+        </Section>
+        <Section align="end" toolbar>
+          <IconButton on:click={() => {$listMode = ListMode.Shop; push('/list');}} toggle>
             <Cart></Cart>
           </IconButton>
-         
           &nbsp;
-         
           <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
-          <Button on:click={() => push('/list')}>
-            <Label>Liste</Label>
+          <Button on:click={() => {$listMode = ListMode.Shop; push('/list');} }>
+            <Label>Shop</Label>
           </Button>
         </Section>
         <Section align="end" toolbar>
