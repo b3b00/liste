@@ -9,7 +9,7 @@
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
     import {AppContent} from '@smui/drawer';
     import Cart from "svelte-material-icons/Cart.svelte";
-    import FormatListBulleted from "svelte-material-icons/FormatListBulleted.svelte";
+    import FormatListBulleted from "svelte-material-icons/Shape.svelte";
     import Pen from "svelte-material-icons/Pen.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
