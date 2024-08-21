@@ -142,8 +142,14 @@
             {#each Object.entries(itemsByCategory) as [category,content]}
 
                 <Paper square style="margin-bottom:25px" variant="outlined">
-                    <Title style="color:{content.color};font-weight:bold;text-decoration:underline">{category} 
-                      <Autocomplete combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
+                  
+                    <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
+                      <div style="display:flex;flex-direction:column">
+                        <Text>
+                      {category} 
+                    </Text>
+                      <div style="display:flex;flex-direction:row">
+                      <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
                           console.log('reset suggestion selection ...')
@@ -152,8 +158,11 @@
                           console.log(suggestionSelection);
                         } 
                         }>
+                        
                       <Check></Check>
                       </IconButton> 
+                    </div>
+                  </div>
                     </Title>
                     <Content>
 
