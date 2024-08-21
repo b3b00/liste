@@ -142,7 +142,7 @@
             {#each Object.entries(itemsByCategory) as [category,content]}
 
                 <Paper square style="margin-bottom:25px">
-                    <Title style="color:{content.color}">{category} 
+                    <Title style="color:{content.color};font-weight:bold;text-decoration:underline">{category} 
                       <Autocomplete combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
