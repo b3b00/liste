@@ -30,13 +30,11 @@
 
         let itemColor : string = "";
 
-        let menus : {[item:string]:Menu} = {};
+        let menus : {[item:id]:Menu} = {};
 
         let suggestions : {[item:string]:string[]} = {};
 
         let suggestionSelection : {[item:string]:string} = {};
-
-        export let params : {[key:string]:string} = {};
 
         let mode : ListMode = ListMode.Edit;
 
@@ -76,7 +74,9 @@
             return;
           }
                 let items = $list;
-                let shopItem : ShopItem = {label : itemLbl, category : itemCat, color :itemCol, done:false};
+                let max = items.length == 0 ? 0 : Math.max(...(items.map(x => x.id)));
+                let itemId = max+1;
+                let shopItem : ShopItem = {label : itemLbl, category : itemCat, color :itemCol, done:false, id:itemId};
                 items.push(shopItem);
                 $list = items;
                 updateItemsByCategory();
@@ -94,11 +94,11 @@
                 updateSuggestions();
         }
 
-        function shop(itemLabel: string) {
+        function shop(itemId: number) {
 
             let items = $list;
             items = items.map( x => {
-                if (x.label == itemLabel) {
+                if (x.id == itemId) {
                     x.done = !x.done;
                 }
                 return x; 
@@ -108,9 +108,9 @@
             updateSuggestions();
         }
 
-        function remove(itemLabel: string) {
+        function remove(itemId: number) {
             let items = $list;
-            items = items.filter( x => x.label !== itemLabel)
+            items = items.filter( x => x.id !== itemId)
             $list = items;
             updateItemsByCategory();
             updateSuggestions();
@@ -174,20 +174,20 @@
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
-                                    <Button on:click={() => shop(categoryItem.label)} variant="raised"
+                                    <Button on:click={() => shop(categoryItem.id)} variant="raised"
                                         style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
                                       <Label>{categoryItem.label}</Label>
                                     </Button>
                                     <div use:GroupItem>
                                       <Button
                                         style="padding: 0; min-width: 36px;color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
-                                        on:click={() => menus[categoryItem.label].setOpen(true)}
+                                        on:click={() => menus[categoryItem.id].setOpen(true)}
                                         variant="raised">
                                         <Icon class="material-icons" style="margin: 0;">arrow_drop_down</Icon>
                                       </Button>
-                                      <Menu bind:this={menus[categoryItem.label]} anchorCorner="TOP_LEFT">
+                                      <Menu bind:this={menus[categoryItem.id]} anchorCorner="TOP_LEFT">
                                         <List>
-                                          <Item on:SMUI:action={() => remove(categoryItem.label)}>
+                                          <Item on:SMUI:action={() => remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
                                         </List>

@@ -10,6 +10,7 @@ export interface ShopItem {
     category: string,
     color: string,
     done : boolean,
+    id: number,
 }
 
 export enum ListMode {
