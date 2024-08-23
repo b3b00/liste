@@ -20,13 +20,9 @@
         });
 
     const importData = async () => {
-        console.log('import data.... ',valueTypeFiles);
         if (valueTypeFiles != null && valueTypeFiles.length == 1) {
-            console.log('found 1 file to import',valueTypeFiles[0]);
             const content = await valueTypeFiles[0].text();
-            console.log('raw data is ',content);
             const data : {categories:Category[], list:ShopItem[], history:{[category:string]:string[]}} = JSON.parse(content);
-            console.log('parsed data is ',data);
             $list = data.list;
             $categories = data.categories;
             $itemsHistory = data.history;

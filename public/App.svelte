@@ -5,18 +5,37 @@
     import Export from "./Export.svelte";
     import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
-    import Button, {Label} from '@smui/button';  
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
-    import {AppContent} from '@smui/drawer';
     import Cart from "svelte-material-icons/Cart.svelte";
-    import FormatListBulleted from "svelte-material-icons/Shape.svelte";
+    import Menu from "svelte-material-icons/Menu.svelte";
+    import Shape from "svelte-material-icons/Shape.svelte";
     import Pen from "svelte-material-icons/Pen.svelte";
+    import Download from "svelte-material-icons/Download.svelte";
+    import Upload from "svelte-material-icons/Upload.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list } from "./store";
     import Import from "./Import.svelte"
     
+    import Drawer, {
+    AppContent,
+    Content,
+    Header,
+    Title,
+    Subtitle,
+    Scrim,
+  } from '@smui/drawer';
+  import List, { Item, Text} from '@smui/list';
+
+  let open = false;
+  let active = 'edit';
+ 
+  function setActive(value: string) {
+    active = value;
+    open = false;    
+  }
+
     
     list.useLocalStorage();
 
@@ -32,13 +51,10 @@
         // check if items have ids. Set it if not the case.
         let items = $list;
         if (items && items.length > 0) {
-          console.log('check and set ids for items',$list);
           let max = items.length > 0 ? Math.max(...items.map(x => x.id)) : 0;
           max = isNaN(max) ? 0 : max;
-          console.log(`current max is ${max}`);
           items.forEach(x => { 
             if (!x.id) { 
-              console.log(`setting id for ${x.category}/${x.label}`);
               max = max +1;
               x.id = max;
             }
@@ -46,21 +62,21 @@
           });
           $list = items;
         }
+
+        const v = await fetch('/version.json');
+        const version : {version:string} = await v.json();
+        listeVersion = version.version;
       });
 
+      let listeVersion : string = "";
 
   let prominent = false;
     let dense = true;
     let secondaryColor = false;
-
-      let open = false;
-
-      
-
   </script>
   
   
-
+  
 
   <TopAppBar
       variant="static"
@@ -69,38 +85,64 @@
       color={secondaryColor ? 'secondary' : 'primary'}
     >
       <Row>
-        <Section align="end" toolbar>
-          <IconButton on:click={() => {$listMode = ListMode.Edit; push('/list');} } toggle>
-            <Pen></Pen>
+        <Section align="start" toolbar>
+          
+          <IconButton on:click={() => {open = ! open;} } toggle>
+            <Menu></Menu>
           </IconButton>
-          &nbsp;
-          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
-          <Button on:click={() => {$listMode = ListMode.Edit; push('/list');} }>
-            <Label>Édition</Label>
-          </Button>
-        </Section>
-        <Section align="end" toolbar>
-          <IconButton on:click={() => {$listMode = ListMode.Shop; push('/list');}} toggle>
-            <Cart></Cart>
-          </IconButton>
-          &nbsp;
-          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
-          <Button on:click={() => {$listMode = ListMode.Shop; push('/list');} }>
-            <Label>Shop</Label>
-          </Button>
-        </Section>
-        <Section align="end" toolbar>
-          <IconButton on:click={() => push('/categories')} toggle>
-            <FormatListBulleted></FormatListBulleted>
-          </IconButton>
-          &nbsp;
-          <Button on:click={() => push('/categories')}>
-            <Label>Catégories</Label>
-          </Button>
         </Section>
       </Row>
     </TopAppBar>
+    <Drawer variant="modal"  bind:open>
+      <Header>
+        <Title>Liste {listeVersion}</Title>
+        <Subtitle>ma liste de courses.</Subtitle>
+      </Header>
+      <Content>
+        <List style="display:flex;flex-direction:column;">
+          <Item
+            href="javascript:void(0)"
+            on:click={() => {setActive('edit'); $listMode = ListMode.Edit; push('/list');} }
+            activated={active === 'edit'}>
+            <Pen></Pen>
+            <Text>Édition</Text>
+          </Item>
+          <Item
+            href="javascript:void(0)"
+            on:click={() => {setActive('shop'); $listMode = ListMode.Shop; push('/list');} }
+            activated={active === 'shop'}>
+            <Cart></Cart>
+            <Text>Shop</Text>
+          </Item>
+          <Item
+            href="javascript:void(0)"
+            on:click={() => {setActive('categories'); push('/categories');} }
+            activated={active === 'categories'}>
+            <Shape></Shape>
+            <Text>Catégories</Text>
+          </Item>
+          <Item
+            href="javascript:void(0)"
+            on:click={() => {setActive('export'); push('/export');} }
+            activated={active === 'export'}>
+            <Download></Download>
+            <Text>Exporter</Text>
+          </Item>
+          <Item
+            href="javascript:void(0)"
+            on:click={() => {setActive('import'); push('/import');} }
+            activated={active === 'import'}>
+            <Upload></Upload>
+            <Text>Importer</Text>
+          </Item>
+        </List>
+      </Content>
+    </Drawer>
+    <Scrim fixed={false} />
+
   <AppContent>
+
+
     <Router {routes}/>
   </AppContent>
   
