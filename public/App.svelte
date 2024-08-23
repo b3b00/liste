@@ -1,7 +1,8 @@
 <script lang="ts">
   
     import Categories from "./Categories.svelte";
-    import ShopList from "./List.svelte";    
+    import ShopList from "./List.svelte";
+    import Export from "./Export.svelte";
     import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     import Button, {Label} from '@smui/button';  
@@ -14,12 +15,16 @@
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list } from "./store";
+    import Import from "./Import.svelte"
+    
     
     list.useLocalStorage();
 
     const routes = {
       '/categories': Categories,
       '/list': ShopList,
+      '/export': Export,
+      '/import': Import,
       '/': ShopList,
   }
   
