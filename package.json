@@ -7,8 +7,9 @@
     "scripts": {
         "format": "prettier --write '**/*.{js,css,json,md}'",
         "dev": "wrangler pages dev --local-protocol=https ./public/ --port=8888",
-        "build:front": "rollup -c",
-        "build:auto": "rollup -c -w",
+        "updateversion": "node setVersion.js",
+        "build:front": "npm run updateversion && rollup -c",
+        "build:auto": "npm run updateversion && rollup -c -w",
         "build:back": "tsc",
         "build": "npm run build:front && npm run build:back"
     },
@@ -28,6 +29,7 @@
         "@rollup/plugin-node-resolve": "^15.0.0",
         "@rollup/plugin-terser": "^0.4.0",
         "@rollup/plugin-typescript": "^11.1.6",
+        "CloudflareIttySvelteTemplate": "file:",
         "itty-router": "5.0.17",
         "material-design-inspired-color-picker": "^1.7.2",
         "rollup": "^3.15.0",
