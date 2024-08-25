@@ -50,9 +50,11 @@
                   return selected;
                 } 
               );
+              
                 itemsByCategory[category.label] = {color:category.color, items : its};
-            });
-          }
+              
+            } );
+        }
 
         function updateSuggestions() {
             for(let i = 0; i < $categories.length; i++) {
@@ -63,6 +65,7 @@
               suggestions[category.label] = filteredSuggestions;
             }
         }  
+
 
         onMount(() => {
             updateItemsByCategory();
@@ -143,7 +146,7 @@
 
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-
+                {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -198,6 +201,7 @@
                         {/if}
                     </Content>
                 </Paper>
+                {/if}
             {/each}
         {/if}
     </div>
