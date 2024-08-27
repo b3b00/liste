@@ -8,9 +8,11 @@
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
     import {AppContent} from '@smui/drawer';
+    import Snackbar, { Actions, Label } from '@smui/snackbar';
     import Cart from "svelte-material-icons/Cart.svelte";
     import FormatListBulleted from "svelte-material-icons/Shape.svelte";
     import Pen from "svelte-material-icons/Pen.svelte";
+    import Help from "svelte-material-icons/Help.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list } from "./store";
@@ -25,6 +27,14 @@
   
       onMount(async () => {
         // check if items have ids. Set it if not the case.
+        let response = await fetch('version.json');
+        if (response.status == 200) {
+          let content:{version:string} = await response.json();
+          versionText = content.version;
+          console.log('version ::',content);
+          console.log(`version text : ${versionText}`);
+        }
+
         let items = $list;
         if (items && items.length > 0) {
           console.log('check and set ids for items',$list);
@@ -50,7 +60,9 @@
 
       let open = false;
 
-      
+      let versionSnack: Snackbar;
+
+      let versionText : string;
 
   </script>
   
@@ -91,10 +103,16 @@
             <Label>Catégories</Label>
           </Button>
         </Section>
+        <Section align="end" toolbar>
+          <IconButton on:click={() => { console.log(`opening snack for 500ms with version ${versionText}`);versionSnack.open(); } }>
+            <Help></Help>
+          </IconButton>
+        </Section>
       </Row>
     </TopAppBar>
   <AppContent>
     <Router {routes}/>
+    <Snackbar style="color:white" bind:this={versionSnack} labelText={versionText} timeoutMs={4000}>{versionText}</Snackbar>
   </AppContent>
   
   
