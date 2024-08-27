@@ -69,7 +69,6 @@
             <Pen></Pen>
           </IconButton>
           &nbsp;
-          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
           <Button on:click={() => {$listMode = ListMode.Edit; push('/list');} }>
             <Label>Édition</Label>
           </Button>
@@ -79,9 +78,8 @@
             <Cart></Cart>
           </IconButton>
           &nbsp;
-          <!-- Note: this doesn't fire the MDCIconButtonToggle:change event. -->
           <Button on:click={() => {$listMode = ListMode.Shop; push('/list');} }>
-            <Label>Shop</Label>
+            <Label>Courses</Label>
           </Button>
         </Section>
         <Section align="end" toolbar>
