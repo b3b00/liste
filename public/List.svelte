@@ -65,7 +65,7 @@
               const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
               suggestions[category.label] = filteredSuggestions;
             }
-        }  
+        }
 
         onMount(() => {
             updateItemsByCategory();
@@ -155,7 +155,7 @@
       aria-describedby="list-selection-content"
       on:SMUIDialog:closed={closeConfirm}
     >
-    <Title id="list-selection-title">Tout supprimer</Title>
+    <Title id="list-selection-title" style="color:red;margin-left:15px;font-size:20px">Êtes vous sûr de vouloir tout supprimer !?</Title>
   <Content id="list-selection-content">
     
     </Content>
@@ -180,7 +180,7 @@
 </Button>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-
+                {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -235,6 +235,9 @@
                         {/if}
                     </Content>
                 </Paper>
+                {:else}
+                  <Text  style="display:block;color:{content.color};font-weight:600;text-decoration:underline;font-size:30px;margin-bottom:25px;margin-left:15px">{category}</Text>
+                {/if}
             {/each}
         {/if}
     </div>
