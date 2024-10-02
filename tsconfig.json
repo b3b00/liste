@@ -8,7 +8,12 @@
     "target": "esnext",
     "module": "es6",
     "moduleResolution": "node",
-    "suppressImplicitAnyIndexErrors": true,
+   // "suppressImplicitAnyIndexErrors": true,
+   // workaround for https://github.com/vuejs/tsconfig/issues/6
+    "preserveValueImports": false,
+    "importsNotUsedAsValues": "remove",
+    "verbatimModuleSyntax": true,
+    // end workaround
     "ignoreDeprecations": "5.0"    
   },
   "exclude": ["./node_modules"],
