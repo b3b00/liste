@@ -12,8 +12,10 @@
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
     import Check from "svelte-material-icons/Check.svelte";
+    import Alert from "svelte-material-icons/Alert.svelte";
     import Autocomplete from '@smui-extra/autocomplete';
-    
+    import Dialog, {Actions }  from '@smui/dialog';
+
 
     list.useLocalStorage();
     categories.useLocalStorage();
@@ -21,7 +23,7 @@
     itemsHistory.useLocalStorage();
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
-   
+
         let open: boolean = false;
 
         let item : string = "";
@@ -40,6 +42,7 @@
 
         let displayAll : boolean = true;
 
+        
         function updateItemsByCategory() {
             itemsByCategory = {};
             let items = $list;
@@ -62,7 +65,7 @@
               const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
               suggestions[category.label] = filteredSuggestions;
             }
-        }  
+        }
 
         onMount(() => {
             updateItemsByCategory();
@@ -129,21 +132,55 @@
           updateItemsByCategory();
         }
 
+        function closeConfirm(e: CustomEvent<{ action: string }>) {
+          console.log(`closing confirm dialog with [${e.detail.action}]`)
+          if (e.detail.action === 'delete') {
+            clean();
+          }
+          openConfirm(false);
+        }
+
+        function openConfirm(opened : boolean = true) {
+          console.log('opening confirm '+opened);
+          open = opened;
+        }
     </script>
     
     <div>
-        <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={clean}>
-          <TrashCanOutline></TrashCanOutline>Tout effacer
-        </Button>
+
+      <Dialog
+      bind:open
+      selection
+      aria-labelledby="list-selection-title"
+      aria-describedby="list-selection-content"
+      on:SMUIDialog:closed={closeConfirm}
+    >
+    <Title id="list-selection-title" style="color:red;margin-left:15px;font-size:20px">Êtes vous sûr de vouloir tout supprimer !?</Title>
+  <Content id="list-selection-content">
+    
+    </Content>
+    <Actions>
+    <Button color="red">
+      <Label>Annuler</Label>
+    </Button>
+    <Button action="delete" style="color:#ff0000">
+      <Alert></Alert>Tout supprimer !
+    </Button>
+  </Actions>
+    </Dialog>
+
+        
 {#if !displayAll} 
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:true})}><EyeOutline></EyeOutline>Afficher les éléments barrés</Button>
 {:else}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:false})}><EyeOffOutline></EyeOffOutline>Masquer les éléments barrés</Button>
 {/if}
-
+<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirm(true)} >
+  <TrashCanOutline></TrashCanOutline>Tout effacer
+</Button>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-
+                {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -198,6 +235,9 @@
                         {/if}
                     </Content>
                 </Paper>
+                {:else}
+                  <Text  style="display:block;color:{content.color};font-weight:600;text-decoration:underline;font-size:30px;margin-bottom:25px;margin-left:15px">{category}</Text>
+                {/if}
             {/each}
         {/if}
     </div>
