@@ -16,6 +16,7 @@
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
     import { label } from "@smui-extra/autocomplete/src/Autocomplete.svelte"
+    import { replace } from "svelte-spa-router"
 
 
     list.useLocalStorage();
@@ -134,14 +135,12 @@
         function showChecked(event : {selected:boolean}) {
           $displayDoneItems = event.selected;
           displayAll = event.selected;
-          console.log(`check : ${displayAll} - ${$displayDoneItems}`);
           updateItemsByCategory();
         }
 
         // DELETE ALL
 
         function closeConfirmDelete(e: CustomEvent<{ action: string }>) {
-          console.log(`closing confirm delete dialog with [${e.detail.action}]`)
           if (e.detail.action === 'delete') {
             clean();
           }
@@ -149,7 +148,6 @@
         }
 
         function openConfirmDelete(opened : boolean = true) {
-          console.log('opening confirm delete '+opened);
           openDelete = opened;
         }
 
@@ -166,9 +164,7 @@
 
 
         function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
-          console.log("> moveToCategory()",item,destCategory)
           if (item && destCategory) {
-            console.log(`moving ${item.id}-${item.label} to category ${destCategory.label}`,movingItem,destCategory);
             let it = item;
             openMove = false;
             movingItem = undefined;
@@ -176,10 +172,8 @@
             let items = $list;
             items = items.map( x => {
               if (x.id == it.id) {
-                console.log(`move item before => ${destCategory.label} - ${destCategory.color}: `,x)
                 x.category = destCategory.label;
                 x.color = destCategory.color;
-                console.log('move item after : ',x)
               }
               return x;
 
@@ -189,6 +183,59 @@
             updateSuggestions();
           }
         }
+
+    function handleDragEnterCategory(id:string) {
+      return (e:any) => {
+        console.log(`enter ${id}`);
+        }
+    }
+
+    function handleDragLeaveCategory(id:string) {
+        return (e:any) => {
+          console.log(`enter ${id}`);
+        }
+    }
+
+    function handleDragDropCategory(id:string) {
+      return (e:any) => {
+        e.preventDefault();
+        console.log(`drop in ${id}`);
+        var item_id = e
+            .dataTransfer
+            .getData("text");
+
+        if (item_id && id) {
+          let item = $list.filter(x => x.id == item_id)[0];
+          let category = $categories.filter(x => x.label == id)[0];
+          moveToCategory(item,category);
+        }
+      }
+    }
+
+    function handleDragOverCategory(id: string) {
+        return (e:any) => {
+        }
+    }
+
+    function handleDragStart(e:any) {
+      let status = "Dragging the element " + e
+        	.target
+          .getAttribute('id');
+console.log(status);
+        e.dataTransfer.dropEffect = "move";
+        e.dataTransfer
+         .setData("text", e.target.getAttribute('id'));
+    }
+
+    function handleDragEnd(e:any) {
+      
+      	let status = "You let the " + e
+        	.target
+          .getAttribute('id') + " go.";
+          console.log(status);
+    	
+    }
+
     </script>
     
     <div>
@@ -257,6 +304,11 @@
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
                 {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
+                <div role="none" on:dragenter={(e) => handleDragEnterCategory(category)(e)} 
+                on:dragleave={(e) => handleDragLeaveCategory(category)(e)}
+                on:drop={(e) => handleDragDropCategory(category)(e)}
+                on:dragover={(e) => handleDragOverCategory(category)(e)}
+                id="{category}">
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -281,22 +333,28 @@
                     {/if}
                   </div>
                     </Title>
-                    <Content>
+                    <Content >
 
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
-                                    <Button on:click={() => shop(categoryItem.id)} variant="raised"
-                                        style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
+                                  
+                                    <Button  on:click={() => shop(categoryItem.id)} variant="raised"
+                                        style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
+                                        id="{categoryItem.id}"
+                                        draggable="true"
+                                        on:dragstart={handleDragStart}
+		                                    on:dragend={handleDragEnd}>
                                       <Label>{categoryItem.label}</Label>
                                     </Button>
-                                    <div use:GroupItem>
-                                      <Button
+                                  
+                                    <div use:GroupItem>                                      
+                                      <Button                                      
                                         style="font-weight:bold; padding: 0; min-width: 36px;color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
                                         on:click={() => menus[categoryItem.id].setOpen(true)}
                                         variant="raised">
                                         <Icon class="material-icons" style="margin: 0;">arrow_drop_down</Icon>
-                                      </Button>
+                                      </Button>                                    
                                       <Menu bind:this={menus[categoryItem.id]} anchorCorner="TOP_LEFT">
                                         <List>
                                           <Item on:SMUI:action={() => remove(categoryItem.id)}>
@@ -313,6 +371,7 @@
                         {/if}
                     </Content>
                 </Paper>
+              </div>
                 {:else}
                   <Text  style="display:block;color:{content.color};font-weight:600;text-decoration:underline;font-size:30px;margin-bottom:25px;margin-left:15px">{category}</Text>
                 {/if}
