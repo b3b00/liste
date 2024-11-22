@@ -314,7 +314,7 @@
                     </Content>
                 </Paper>
                 {:else}
-                  <Text  style="display:block;color:{content.color};font-weight:600;text-decoration:underline;font-size:30px;margin-bottom:25px;margin-left:15px">{category}</Text>
+                  <!-- Text  style="display:block;color:{content.color};font-weight:600;text-decoration:underline;font-size:30px;margin-bottom:25px;margin-left:15px">{category}</Text -->
                 {/if}
             {/each}
         {/if}
