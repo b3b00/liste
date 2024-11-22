@@ -186,54 +186,41 @@
 
     function handleDragEnterCategory(id:string) {
       return (e:any) => {
-        console.log(`enter ${id}`);
+        
         }
     }
 
     function handleDragLeaveCategory(id:string) {
         return (e:any) => {
-          console.log(`enter ${id}`);
+        
         }
     }
 
     function handleDragDropCategory(id:string) {
       return (e:any) => {
         e.preventDefault();
-        console.log(`drop in ${id}`);
-        var item_id = e
-            .dataTransfer
-            .getData("text");
 
-        if (item_id && id) {
-          let item = $list.filter(x => x.id == item_id)[0];
+        var rawItem = e.dataTransfer.getData("item");
+        var item:ShopItem = JSON.parse(rawItem);
+
+        if (item && id) {
           let category = $categories.filter(x => x.label == id)[0];
           moveToCategory(item,category);
         }
       }
     }
 
-    function handleDragOverCategory(id: string) {
-        return (e:any) => {
-        }
-    }
 
-    function handleDragStart(e:any) {
-      let status = "Dragging the element " + e
-        	.target
-          .getAttribute('id');
-console.log(status);
-        e.dataTransfer.dropEffect = "move";
-        e.dataTransfer
-         .setData("text", e.target.getAttribute('id'));
+    function handleDragStart(item:ShopItem) {
+      return (e:any) => {
+        let raw = JSON.stringify(item);
+          e.dataTransfer.dropEffect = "move";
+          e.dataTransfer
+          .setData("item", raw);
+      }
     }
 
     function handleDragEnd(e:any) {
-      
-      	let status = "You let the " + e
-        	.target
-          .getAttribute('id') + " go.";
-          console.log(status);
-    	
     }
 
     </script>
@@ -343,7 +330,7 @@ console.log(status);
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
                                         id="{categoryItem.id}"
                                         draggable="true"
-                                        on:dragstart={handleDragStart}
+                                        on:dragstart={e => handleDragStart(categoryItem)(e)}
 		                                    on:dragend={handleDragEnd}>
                                       <Label>{categoryItem.label}</Label>
                                     </Button>
