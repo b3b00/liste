@@ -15,6 +15,7 @@
     import Alert from "svelte-material-icons/Alert.svelte";
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
+    import { label } from "@smui-extra/autocomplete/src/Autocomplete.svelte"
 
 
     list.useLocalStorage();
@@ -175,9 +176,13 @@
             let items = $list;
             items = items.map( x => {
               if (x.id == it.id) {
+                console.log(`move item before => ${destCategory.label} - ${destCategory.color}: `,x)
                 x.category = destCategory.label;
+                x.color = destCategory.color;
+                console.log('move item after : ',x)
               }
               return x;
+
           })
             $list = items;
             updateItemsByCategory();
@@ -226,7 +231,7 @@
   <Content id="list-selection-content">
     <List>
       {#each $categories as category}
-
+        {#if category.label != movingItem?.category}
         <Item
           on:click={() => {
             console.log('on click category ',category);
@@ -235,6 +240,7 @@
         >
           <Text style="font-weight:bold;align:center;color:{category.color}">{category.label.toUpperCase()} </Text>
         </Item>
+        {/if}
       {/each}
     </List>
     </Content>
