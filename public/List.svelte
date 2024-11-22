@@ -2,7 +2,7 @@
 
     import { onMount } from "svelte";
     import { list, categories, displayDoneItems, itemsHistory, listMode } from './store';
-    import {ListMode, ShopItem} from './model';
+    import {ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
     import Button, { Group, GroupItem, Label, Icon } from '@smui/button';
@@ -24,7 +24,7 @@
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
 
-        let open: boolean = false;
+        let openDelete: boolean = false;
 
         let item : string = "";
 
@@ -32,7 +32,7 @@
 
         let itemColor : string = "";
 
-        let menus : {[item:id]:Menu} = {};
+        let menus : {[item:string]:Menu} = {};
 
         let suggestions : {[item:string]:string[]} = {};
 
@@ -118,6 +118,11 @@
             updateItemsByCategory();
             updateSuggestions();
         }
+        function move(itemId: number) {
+            let items = $list;
+            updateItemsByCategory();
+            updateSuggestions();
+        }
 
         function clean() {
             $list = [];
@@ -132,28 +137,64 @@
           updateItemsByCategory();
         }
 
-        function closeConfirm(e: CustomEvent<{ action: string }>) {
-          console.log(`closing confirm dialog with [${e.detail.action}]`)
+        // DELETE ALL
+
+        function closeConfirmDelete(e: CustomEvent<{ action: string }>) {
+          console.log(`closing confirm delete dialog with [${e.detail.action}]`)
           if (e.detail.action === 'delete') {
             clean();
           }
-          openConfirm(false);
+          openConfirmDelete(false);
         }
 
-        function openConfirm(opened : boolean = true) {
-          console.log('opening confirm '+opened);
-          open = opened;
+        function openConfirmDelete(opened : boolean = true) {
+          console.log('opening confirm delete '+opened);
+          openDelete = opened;
+        }
+
+        // MOVE
+
+        let movingItem: ShopItem|undefined;
+
+        let openMove: boolean;
+
+        function openMoveDialog(item: ShopItem) {
+          openMove = true;
+          movingItem = item;
+        }
+
+
+        function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
+          console.log("> moveToCategory()",item,destCategory)
+          if (item && destCategory) {
+            console.log(`moving ${item.id}-${item.label} to category ${destCategory.label}`,movingItem,destCategory);
+            let it = item;
+            openMove = false;
+            movingItem = undefined;
+
+            let items = $list;
+            items = items.map( x => {
+              if (x.id == it.id) {
+                x.category = destCategory.label;
+              }
+              return x;
+          })
+            $list = items;
+            updateItemsByCategory();
+            updateSuggestions();
+
+          }
         }
     </script>
     
     <div>
 
       <Dialog
-      bind:open
+      bind:open={openDelete}
       selection
       aria-labelledby="list-selection-title"
       aria-describedby="list-selection-content"
-      on:SMUIDialog:closed={closeConfirm}
+      on:SMUIDialog:closed={closeConfirmDelete}
     >
     <Title id="list-selection-title" style="color:red;margin-left:15px;font-size:20px">Êtes vous sûr de vouloir tout supprimer !?</Title>
   <Content id="list-selection-content">
@@ -169,13 +210,43 @@
   </Actions>
     </Dialog>
 
+
+    <Dialog
+      bind:open={openMove}
+      selection
+      aria-labelledby="list-selection-title"
+      aria-describedby="list-selection-content"
+      on:SMUIDialog:closed={() => { 
+        openMove = false;
+        movingItem = undefined;
+        }
+      }
+    >
+    <!-- <Title id="list-selection-title" style="color:red;margin-left:15px;font-size:20px">Déplacer vers une autre catégorie</Title> -->
+  <Content id="list-selection-content">
+    <List>
+      {#each $categories as category}
+
+        <Item
+          on:click={() => {
+            console.log('on click category ',category);
+            moveToCategory(movingItem, category);
+          }}
+        >
+          <Text style="font-weight:bold;align:center;color:{category.color}">{category.label.toUpperCase()} </Text>
+        </Item>
+      {/each}
+    </List>
+    </Content>
+    </Dialog>
+
         
 {#if !displayAll} 
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:true})}><EyeOutline></EyeOutline>Afficher les éléments barrés</Button>
 {:else}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:false})}><EyeOffOutline></EyeOffOutline>Masquer les éléments barrés</Button>
 {/if}
-<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirm(true)} >
+<Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
 </Button>
         {#if itemsByCategory}
@@ -193,7 +264,6 @@
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
-                          console.log('reset suggestion selection ...')
                           suggestionSelection[category] = "";
                           suggestionSelection = suggestionSelection;
                           console.log(suggestionSelection);
@@ -212,12 +282,12 @@
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
                                     <Button on:click={() => shop(categoryItem.id)} variant="raised"
-                                        style="color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
+                                        style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
                                       <Label>{categoryItem.label}</Label>
                                     </Button>
                                     <div use:GroupItem>
                                       <Button
-                                        style="padding: 0; min-width: 36px;color:black;font-weight: bold;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
+                                        style="font-weight:bold; padding: 0; min-width: 36px;color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}"
                                         on:click={() => menus[categoryItem.id].setOpen(true)}
                                         variant="raised">
                                         <Icon class="material-icons" style="margin: 0;">arrow_drop_down</Icon>
@@ -226,6 +296,9 @@
                                         <List>
                                           <Item on:SMUI:action={() => remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
+                                          </Item>
+                                          <Item on:SMUI:action={() => openMoveDialog(categoryItem)}>
+                                            <Text>Déplacer</Text>
                                           </Item>
                                         </List>
                                       </Menu>

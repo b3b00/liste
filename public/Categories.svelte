@@ -7,7 +7,7 @@
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
     import {categories, list, itemsHistory} from './store';
-    import {Category} from './model';
+    import {type Category} from './model';
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     

@@ -1,5 +1,7 @@
 import { writable } from 'svelte/store';
-import { Category, ListMode, ShopItem } from './model';
+import type { Category } from './model';
+import type { ShopItem } from './model';
+import { ListMode } from './model';
 
 
 const createWritableStore = <T>(key:string, startValue:T) => {
