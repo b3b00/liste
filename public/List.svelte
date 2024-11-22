@@ -187,7 +187,6 @@
             $list = items;
             updateItemsByCategory();
             updateSuggestions();
-
           }
         }
     </script>

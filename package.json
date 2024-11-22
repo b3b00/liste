@@ -1,5 +1,5 @@
 {
-    "name": "CloudflareIttySvelteTemplate",
+    "name": "liste",
     "private": true,
     "type": "module",
     "version": "1.0.0",
@@ -49,3 +49,5 @@
         "testEnvironment": "node"
     }
 }
+
+    

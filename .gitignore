@@ -22,3 +22,4 @@ public/store.js
 public/bundle.*
 public/version.json
 public/worker.js
+public/model.js
