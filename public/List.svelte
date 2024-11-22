@@ -307,7 +307,7 @@ console.log(status);
                 <div role="none" on:dragenter={(e) => handleDragEnterCategory(category)(e)} 
                 on:dragleave={(e) => handleDragLeaveCategory(category)(e)}
                 on:drop={(e) => handleDragDropCategory(category)(e)}
-                on:dragover={(e) => handleDragOverCategory(category)(e)}
+                ondragover="return false"
                 id="{category}">
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
