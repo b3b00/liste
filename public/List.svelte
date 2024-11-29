@@ -15,7 +15,7 @@
     import Alert from "svelte-material-icons/Alert.svelte";
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
-    import { label } from "@smui-extra/autocomplete/src/Autocomplete.svelte"
+    import {isDark} from './colors';
 
 
     list.useLocalStorage();
@@ -288,7 +288,7 @@
                                 <Group variant="raised">
                                     <Button on:click={() => shop(categoryItem.id)} variant="raised"
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
-                                      <Label>{categoryItem.label}</Label>
+                                      <Label style="color:{isDark(categoryItem.color) ? 'white' : 'black'}">{categoryItem.label}</Label>
                                     </Button>
                                     <div use:GroupItem>
                                       <Button
