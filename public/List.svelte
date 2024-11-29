@@ -15,7 +15,7 @@
     import Alert from "svelte-material-icons/Alert.svelte";
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
-    import { label } from "@smui-extra/autocomplete/src/Autocomplete.svelte"
+    import {isDark} from './colors';
 
 
     list.useLocalStorage();
@@ -254,6 +254,7 @@
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
 </Button>
+<h2>grand blanc</h2>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
                 {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
@@ -288,7 +289,7 @@
                                 <Group variant="raised">
                                     <Button on:click={() => shop(categoryItem.id)} variant="raised"
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
-                                      <Label>{categoryItem.label}</Label>
+                                      <Label style="color:{isDark(categoryItem.color) ? 'white' : 'black'}">{categoryItem.label}</Label>
                                     </Button>
                                     <div use:GroupItem>
                                       <Button
