@@ -17,3 +17,9 @@ export enum ListMode {
     Shop,
     Edit
 }
+
+export enum ColorMode {
+    White,
+    Black,
+    Contrast
+}
