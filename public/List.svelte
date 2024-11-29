@@ -2,7 +2,7 @@
 
     import { onMount } from "svelte";
     import { list, categories, displayDoneItems, itemsHistory, listMode } from './store';
-    import {ListMode, type Category, type ShopItem} from './model';
+    import {ColorMode, ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
     import Button, { Group, GroupItem, Label, Icon } from '@smui/button';
@@ -16,6 +16,7 @@
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
     import {isDark} from './colors';
+    import { style } from "@smui/button/src/Button.svelte"
 
 
     list.useLocalStorage();
@@ -42,6 +43,27 @@
         let mode : ListMode = ListMode.Edit;
 
         let displayAll : boolean = true;
+
+        let colorMode : ColorMode = ColorMode.Contrast;
+
+        function getColor(hexa:string, mode:ColorMode): string {
+          console.log(`getcolor() : ${mode} / ${hexa}`)
+          switch(mode) {
+            case ColorMode.White: {
+              console.log('   W -> white');
+              return "white"
+            }
+            case ColorMode.Black: {
+              return "black"
+              console.log('   B -> black');
+            } 
+            case ColorMode.Contrast: {
+              const color = isDark(hexa) ? "white" : "black";
+              console.log(`   C -> ${isDark(hexa)} -> ${color}`);
+              return color;
+            }
+          }
+        }
 
         
         function updateItemsByCategory() {
@@ -253,7 +275,13 @@
 {/if}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
-</Button>
+</Button><br>
+<Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.Black ? 'green' : 'white'}" 
+  on:click={() => {colorMode = ColorMode.Black;}}>Noir</Button>
+  <Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.White ? 'green' : 'white'}" 
+  on:click={() => {colorMode = ColorMode.White;}}>Blanc</Button>
+  <Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.Contrast ? 'green' : 'white'}" 
+  on:click={() => {colorMode = ColorMode.Contrast;}}>Contrast</Button>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
                 {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
@@ -288,7 +316,7 @@
                                 <Group variant="raised">
                                     <Button on:click={() => shop(categoryItem.id)} variant="raised"
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
-                                      <Label style="color:{isDark(categoryItem.color) ? 'white' : 'black'}">{categoryItem.label}</Label>
+                                      <Label style="color:{getColor(categoryItem.color, colorMode)}">{categoryItem.label}</Label>
                                     </Button>
                                     <div use:GroupItem>
                                       <Button
