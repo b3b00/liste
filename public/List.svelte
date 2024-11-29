@@ -264,12 +264,14 @@
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
 </Button><br>
+{#if $listMode == ListMode.Shop}
 <Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.Black ? 'green' : 'white'}" 
   on:click={() => {colorMode = ColorMode.Black;}}>Noir</Button>
   <Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.White ? 'green' : 'white'}" 
   on:click={() => {colorMode = ColorMode.White;}}>Blanc</Button>
-  <Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.Contrast ? 'green' : 'white'}" 
+  <Button class="button-shaped-round"  style="color:black;font-weight: bold;background-color:{colorMode == ColorMode.Contrast ? 'green' : 'white'}"   
   on:click={() => {colorMode = ColorMode.Contrast;}}>Contrast</Button>
+  {/if}
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
                 {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
