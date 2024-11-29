@@ -47,19 +47,15 @@
         let colorMode : ColorMode = ColorMode.Contrast;
 
         function getColor(hexa:string, mode:ColorMode): string {
-          console.log(`getcolor() : ${mode} / ${hexa}`)
           switch(mode) {
             case ColorMode.White: {
-              console.log('   W -> white');
               return "white"
             }
             case ColorMode.Black: {
               return "black"
-              console.log('   B -> black');
             } 
             case ColorMode.Contrast: {
               const color = isDark(hexa) ? "white" : "black";
-              console.log(`   C -> ${isDark(hexa)} -> ${color}`);
               return color;
             }
           }
@@ -156,14 +152,12 @@
         function showChecked(event : {selected:boolean}) {
           $displayDoneItems = event.selected;
           displayAll = event.selected;
-          console.log(`check : ${displayAll} - ${$displayDoneItems}`);
           updateItemsByCategory();
         }
 
         // DELETE ALL
 
         function closeConfirmDelete(e: CustomEvent<{ action: string }>) {
-          console.log(`closing confirm delete dialog with [${e.detail.action}]`)
           if (e.detail.action === 'delete') {
             clean();
           }
@@ -171,7 +165,6 @@
         }
 
         function openConfirmDelete(opened : boolean = true) {
-          console.log('opening confirm delete '+opened);
           openDelete = opened;
         }
 
@@ -188,9 +181,7 @@
 
 
         function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
-          console.log("> moveToCategory()",item,destCategory)
           if (item && destCategory) {
-            console.log(`moving ${item.id}-${item.label} to category ${destCategory.label}`,movingItem,destCategory);
             let it = item;
             openMove = false;
             movingItem = undefined;
@@ -198,10 +189,8 @@
             let items = $list;
             items = items.map( x => {
               if (x.id == it.id) {
-                console.log(`move item before => ${destCategory.label} - ${destCategory.color}: `,x)
                 x.category = destCategory.label;
                 x.color = destCategory.color;
-                console.log('move item after : ',x)
               }
               return x;
 
@@ -255,7 +244,6 @@
         {#if category.label != movingItem?.category}
         <Item
           on:click={() => {
-            console.log('on click category ',category);
             moveToCategory(movingItem, category);
           }}
         >
@@ -299,7 +287,6 @@
                           AddOrUpdate(suggestionSelection[category],category,content.color);
                           suggestionSelection[category] = "";
                           suggestionSelection = suggestionSelection;
-                          console.log(suggestionSelection);
                         } 
                         }>
                         

@@ -27,13 +27,10 @@
         // check if items have ids. Set it if not the case.
         let items = $list;
         if (items && items.length > 0) {
-          console.log('check and set ids for items',$list);
           let max = items.length > 0 ? Math.max(...items.map(x => x.id)) : 0;
           max = isNaN(max) ? 0 : max;
-          console.log(`current max is ${max}`);
           items.forEach(x => { 
             if (!x.id) { 
-              console.log(`setting id for ${x.category}/${x.label}`);
               max = max +1;
               x.id = max;
             }

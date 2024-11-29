@@ -40,6 +40,5 @@ export const hexaRgbToHsl = (hexa:string):{h:number, s:number, l:number} => {
 
 export const isDark = (hexa:string): boolean => {
     const hsl = hexaRgbToHsl(hexa);
-    console.log(`   HSL : ${hsl.l} ${hsl.l < 50}`);
     return hsl.l < 50;
 }
