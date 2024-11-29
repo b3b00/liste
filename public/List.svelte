@@ -254,7 +254,6 @@
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
 </Button>
-<h2>grand blanc</h2>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
                 {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
