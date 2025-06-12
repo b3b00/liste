@@ -1,24 +1,18 @@
-import LZMA from 'lzma-web'
-const lzma = new LZMA()
-//import { compress, decompress } from 'lzma-web';
+import { compressToURI, decompressFromURI } from 'lz-ts'
 
 // Encode une chaîne en Base64 compressée
-export let compressAndEncodeBase64 = async (input: string): Promise<string> => {
-        const buffer = await lzma.compress(input)
-        const compressed = new TextDecoder().decode(buffer)
-        return atob(compressed);
+export let compressAndEncodeBase64 = (input: string): string => {
+    console.log('compressAndEncodeBase64 input: ', input)
+    let compressed = compressToURI(input);
+    console.log(compressed)
+    let b64 = btoa(compressed)
+    console.log(b64)
+    return b64
 }
 
 // Décode Base64 et décompresse pour retrouver la chaîne originale
-export let decodeBase64AndDecompress = async (
-    base64: string
-): Promise<string> => {
+export let decodeBase64AndDecompress = (base64: string): string => {
     let compressed = atob(base64)
-    const buffer = new TextEncoder().encode(compressed)
-    let result = await lzma.decompress(buffer);
-    let stringResult : string = '';
-    if (result instanceof Uint8Array) {
-        stringResult = new TextDecoder().decode(result as Uint8Array)
-    }
-    return stringResult;
+    let result = decompressFromURI(compressed)
+    return result
 }

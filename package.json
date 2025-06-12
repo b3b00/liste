@@ -31,6 +31,7 @@
         "@rollup/plugin-typescript": "^11.1.6",
         "CloudflareIttySvelteTemplate": "file:",
         "itty-router": "5.0.17",
+        "lz-ts": "^1.1.2",
         "lzma-web": "^3.0.1",
         "material-design-inspired-color-picker": "^1.7.2",
         "qrious": "^4.0.2",

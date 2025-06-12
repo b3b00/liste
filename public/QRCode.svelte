@@ -7,7 +7,7 @@
     export let errorCorrection = "L";
     export let background = "#fff";
     export let color = "#000";
-    export let size = "200";
+    export let size = "500";
     export let value = ""
     export let padding = 0;
   
@@ -27,6 +27,11 @@
       });
   
       image = QRcode.toDataURL('image/jpeg')
+
+console.log("QR code generated", image);
+  
+      
+
     }
   
   </script>

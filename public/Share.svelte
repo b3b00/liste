@@ -29,9 +29,8 @@ let initialize = async () => {
     };
 
     const compressedData = await compressAndEncodeBase64(JSON.stringify(data));
-    let href=window.location.href;;
-    let fragment = `#import/${compressedData}`;
-    ShareLink = `${href}${fragment}`;
+    const url = window.location.origin;
+    ShareLink = `${url}/#import/${compressedData}`;
     navigator.clipboard.writeText(ShareLink).then(() => {
         alert("Share data copied to clipboard!");
     }).catch(err => {

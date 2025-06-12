@@ -18,6 +18,7 @@
     import ShareL from "./Share.svelte";
     import { type SharedList } from "./model";
     import { decodeBase64AndDecompress } from "./zip";
+    import QrCode from "./QRCode.svelte"
     
     list.useLocalStorage();
     sharedList.useLocalStorage();
