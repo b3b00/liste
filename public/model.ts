@@ -17,3 +17,8 @@ export enum ListMode {
     Shop,
     Edit
 }
+
+export interface SharedList {
+    categories: Category[],
+    list: ShopItem[],
+}

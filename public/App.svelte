@@ -10,17 +10,34 @@
     import {AppContent} from '@smui/drawer';
     import Cart from "svelte-material-icons/Cart.svelte";
     import FormatListBulleted from "svelte-material-icons/Shape.svelte";
+    import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
-    import { listMode, list } from "./store";
+    import { listMode, list, sharedList } from "./store";
+    import ShareL from "./Share.svelte";
+    import { type SharedList } from "./model";
+    import { decodeBase64AndDecompress } from "./zip";
     
     list.useLocalStorage();
+    sharedList.useLocalStorage();
 
     const routes = {
       '/categories': Categories,
       '/list': ShopList,
       '/': ShopList,
+      '/share': ShareL,
+      '/import/:data': async (params: { data: string }) => {
+        const { data } = params;
+        console.log('importing data', data);
+        const decodedData = await decodeBase64AndDecompress(data);
+        console.log('decodedData', decodedData);
+        const parsedData : SharedList = JSON.parse(decodedData);
+        console.log('parsedData', parsedData);
+        sharedList.set(parsedData);
+        // TODO : set shared data in store ?
+        return ShopList;
+      }
   }
   
       onMount(async () => {
@@ -89,6 +106,14 @@
           &nbsp;
           <Button on:click={() => push('/categories')}>
             <Label>Catégories</Label>
+          </Button>
+        </Section>
+        <Section align="end" toolbar>
+          <IconButton on:click={() => push('/share')} toggle>
+            <Share></Share>
+          </IconButton>
+          &nbsp;
+          <Button on:click={() => push('/share')}>
           </Button>
         </Section>
       </Row>
