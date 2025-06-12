@@ -28,14 +28,11 @@ let initialize = async () => {
         categories: currentCategories
     };
 
-    const compressedData = await compressAndEncodeBase64(JSON.stringify(data));
+    const compressedData = await compressAndEncodeBase64("hello world");
     const url = window.location.origin;
     ShareLink = `${url}/#import/${compressedData}`;
-    navigator.clipboard.writeText(ShareLink).then(() => {
-        alert("Share data copied to clipboard!");
-    }).catch(err => {
-        console.error("Failed to copy: ", err);
-    });
+    console.log("SHARE :: ShareLink:", ShareLink);
+    navigator.clipboard.writeText(ShareLink);
 }
 
 
@@ -54,5 +51,5 @@ let share = async () => {
     <IconButton on:click={share} toggle>
                 <Share></Share>
     </IconButton>
-    <QRCode {ShareLink} />
+    <QRCode value={ShareLink} />
 </div>

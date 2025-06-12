@@ -1,39 +1,23 @@
     <script>
-    import QRious from 'qrious';
-  
-    const QRcode = new QRious();
-  
-  
-    export let errorCorrection = "L";
-    export let background = "#fff";
-    export let color = "#000";
-    export let size = "500";
+
+      import {onMount} from "svelte";
+    
     export let value = ""
-    export let padding = 0;
-  
-    export let className = "qrcode"
+    export let size = "200";
   
     let image = null;
   
+    onMount(() => {
+      console.log("Generating QR code for value:", value, encodeURIComponent(value));
+      image = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
+      console.log("QR code image URL:", image);
+    });
+
     $: {
-  
-      QRcode.set({
-        background,
-        foreground: color,
-        level: errorCorrection,
-        padding,
-        size,
-        value,
-      });
-  
-      image = QRcode.toDataURL('image/jpeg')
-
-console.log("QR code generated", image);
-  
-      
-
+      console.log("reactive : Generating QR code for value:", value, encodeURIComponent(value));
+      image = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
+      console.log("reactive : QR code image URL:", image);
     }
-  
   </script>
-  
-  <img src={image} alt="" class={className} />
+
+  <img src={image} alt=""/>
