@@ -47,17 +47,13 @@ $: {
 
     <div>
 
-        <h1>Import</h1>
-        <p>{$sharedList.categories.length} categories</p>
-        <ul>
-        {#each $sharedList.categories as category}
-            <li>{category.label}</li>
-        {/each}
-        </ul>
-        <p>{$sharedList.list.length} items</p>
+        <a href="/#/list/share"><h1>Liste importée</h1></a>
+
+        
         <ul>
         {#each $sharedList.list as item}
             <li>{item.label} - {item.category}</li>
         {/each}
+        </ul>
         
     </div>

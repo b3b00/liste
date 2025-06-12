@@ -13,6 +13,7 @@
     import FormatListBulleted from "svelte-material-icons/Shape.svelte";
     import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
+    import Inbox from "svelte-material-icons/inbox.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList } from "./store";
@@ -25,7 +26,7 @@
 
     const routes = {
       '/categories': Categories,
-      '/list': ShopList,
+      '/list/:mode?': ShopList,
       '/': ShopList,
       '/share': ShareL,
       '/import/:data': Import
@@ -106,8 +107,21 @@
           </IconButton>
           &nbsp;
           <Button on:click={() => push('/share')}>
+            <label>Partager</label>
           </Button>
         </Section>
+        {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0}
+          <Section align="end" toolbar>
+            <IconButton on:click={() => push('/list/share' + encodeURIComponent(decodeBase64AndDecompress(JSON.stringify($sharedList))))} toggle>
+              <Inbox></Inbox>
+            </IconButton>
+            &nbsp;
+            <Button on:click={() => push('/import/' + encodeURIComponent(decodeBase64AndDecompress(JSON.stringify($sharedList))))}>
+              <Label>liste re&ccedil;ue</Label>
+            </Button>
+          </Section>
+          
+        {/if}
       </Row>
     </TopAppBar>
   <AppContent>

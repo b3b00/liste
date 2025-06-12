@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, itemsHistory, listMode } from './store';
+    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList } from './store';
     import {ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
@@ -22,16 +22,11 @@
     categories.useLocalStorage();
     displayDoneItems.useLocalStorage();
     itemsHistory.useLocalStorage();
+    sharedList.useLocalStorage();
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
 
         let openDelete: boolean = false;
-
-        let item : string = "";
-
-        let itemCategory : string = "";
-
-        let itemColor : string = "";
 
         let menus : {[item:string]:Menu} = {};
 
@@ -43,7 +38,8 @@
 
         let displayAll : boolean = true;
 
-        
+        export let params : {mode : ListMode} = {mode: ListMode.Edit};
+
         function updateItemsByCategory() {
             itemsByCategory = {};
             let items = $list;
