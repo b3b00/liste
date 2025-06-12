@@ -16,7 +16,7 @@ export interface ShopItem {
 export enum ListMode {
     Shop,
     Edit,
-    Share,
+    In,
 }
 
 export interface SharedList {

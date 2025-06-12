@@ -18,8 +18,6 @@
     import { ListMode } from "./model"
     import { listMode, list, sharedList } from "./store";
     import ShareL from "./Share.svelte";
-    import { type SharedList } from "./model";
-    import { decodeBase64AndDecompress } from "./zip";
     
     list.useLocalStorage();
     sharedList.useLocalStorage();
@@ -110,14 +108,14 @@
             <label>Partager</label>
           </Button>
         </Section>
-        {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0}
+        {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}
           <Section align="end" toolbar>
-            <IconButton on:click={() => push('/list/share' + encodeURIComponent(decodeBase64AndDecompress(JSON.stringify($sharedList))))} toggle>
+            <IconButton on:click={() => push('/list/In')} toggle>
               <Inbox></Inbox>
             </IconButton>
             &nbsp;
-            <Button on:click={() => push('/import/' + encodeURIComponent(decodeBase64AndDecompress(JSON.stringify($sharedList))))}>
-              <Label>liste re&ccedil;ue</Label>
+            <Button on:click={() => push('/list/In')}>
+              <Label>liste reçue</Label>
             </Button>
           </Section>
           
