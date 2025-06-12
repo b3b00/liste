@@ -13,7 +13,7 @@
     import FormatListBulleted from "svelte-material-icons/Shape.svelte";
     import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
-    import Inbox from "svelte-material-icons/inbox.svelte";
+    import Inbox from "svelte-material-icons/Inbox.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList } from "./store";
