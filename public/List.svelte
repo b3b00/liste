@@ -38,7 +38,7 @@
 
         let displayAll : boolean = true;
 
-        export let params : {mode : ListMode} = {mode: ListMode.Edit};
+        export let params;
 
         function updateItemsByCategory() {
             itemsByCategory = {};
@@ -70,8 +70,14 @@
           }
         }
 
-        onMount(() => {
-          console.log('List.onMount() - params.mode : ',params.mode);
+        $:{          
+          mode = params.mode && params.mode == "In"? ListMode.In : $listMode;
+            updateItemsByCategory();
+            updateSuggestions();
+        }
+
+        onMount(() => {          
+          mode = params.mode && params.mode == "In"? ListMode.In : $listMode;
             updateItemsByCategory();
             updateSuggestions();
         })
@@ -130,12 +136,7 @@
             }
             updateItemsByCategory();
             updateSuggestions();
-        }
-        function move(itemId: number) {
-            let items = $list;
-            updateItemsByCategory();
-            updateSuggestions();
-        }
+        }        
 
         function clean() {
             $list = [];
@@ -146,7 +147,6 @@
         function showChecked(event : {selected:boolean}) {
           $displayDoneItems = event.selected;
           displayAll = event.selected;
-          console.log(`check : ${displayAll} - ${$displayDoneItems}`);
           updateItemsByCategory();
         }
 
@@ -263,12 +263,14 @@
 {:else}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:false})}><EyeOffOutline></EyeOffOutline>Masquer les éléments barrés</Button>
 {/if}
+{#if mode != ListMode.In}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
 </Button>
+{/if}
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-                {#if $listMode == ListMode.Edit || (($listMode == ListMode.Shop || $listMode == ListMode.In) && content.items && content.items.length > 0)}
+                {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.In) && content.items && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -276,7 +278,7 @@
                         <Text>
                       {category} 
                     </Text>
-                    {#if $listMode == ListMode.Edit}
+                    {#if mode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
@@ -314,9 +316,11 @@
                                           <Item on:SMUI:action={() => remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
+                                          {#if mode !== ListMode.In}
                                           <Item on:SMUI:action={() => openMoveDialog(categoryItem)}>
                                             <Text>Déplacer</Text>
                                           </Item>
+                                          {/if}
                                         </List>
                                       </Menu>
                                     </div>
