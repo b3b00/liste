@@ -7,6 +7,7 @@ import QRCode from './QRCode.svelte';
 import Pen from "svelte-material-icons/Pen.svelte";
 import Share from "svelte-material-icons/Share.svelte";
 import IconButton from '@smui/icon-button';
+import {push} from 'svelte-spa-router'
 
 onMount(async () => {
     await initialize();
@@ -28,9 +29,9 @@ let initialize = async () => {
         categories: currentCategories
     };
 
-    const compressedData = await compressAndEncodeBase64("hello world");
+    const compressedData = await compressAndEncodeBase64(JSON.stringify(data));
     const url = window.location.origin;
-    ShareLink = `${url}/#import/${compressedData}`;
+    ShareLink = `${url}/#/import/${compressedData}`;
     navigator.clipboard.writeText(ShareLink);
 }
 
@@ -50,5 +51,9 @@ let share = async () => {
     <IconButton on:click={share} toggle>
                 <Share></Share>
     </IconButton>
+    <br/>
+    <a href="{ShareLink}" target="_blank" rel="noopener noreferrer">
     <QRCode value={ShareLink} />
+    </a>
+    <br/>
 </div>

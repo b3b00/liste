@@ -2,6 +2,7 @@
   
     import Categories from "./Categories.svelte";
     import ShopList from "./List.svelte";    
+    import Import from "./Import.svelte";    
     import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     import Button, {Label} from '@smui/button';  
@@ -18,7 +19,6 @@
     import ShareL from "./Share.svelte";
     import { type SharedList } from "./model";
     import { decodeBase64AndDecompress } from "./zip";
-    import QrCode from "./QRCode.svelte"
     
     list.useLocalStorage();
     sharedList.useLocalStorage();
@@ -28,18 +28,9 @@
       '/list': ShopList,
       '/': ShopList,
       '/share': ShareL,
-      '/import/:data': async (params: { data: string }) => {
-        const { data } = params;
-        console.log('importing data', data);
-        const decodedData = await decodeBase64AndDecompress(data);
-        console.log('decodedData', decodedData);
-        const parsedData : SharedList = JSON.parse(decodedData);
-        console.log('parsedData', parsedData);
-        sharedList.set(parsedData);
-        // TODO : set shared data in store ?
-        return ShopList;
+      '/import/:data': Import
       }
-  }
+  
   
       onMount(async () => {
         // check if items have ids. Set it if not the case.
