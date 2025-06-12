@@ -2,11 +2,8 @@ import { compressToURI, decompressFromURI } from 'lz-ts'
 
 // Encode une chaîne en Base64 compressée
 export let compressAndEncodeBase64 = (input: string): string => {
-    console.log('compressAndEncodeBase64 input: ', input)
     let compressed = compressToURI(input);
-    console.log(compressed)
     let b64 = btoa(compressed)
-    console.log(b64)
     return b64
 }
 

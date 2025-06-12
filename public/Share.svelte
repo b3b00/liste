@@ -31,7 +31,6 @@ let initialize = async () => {
     const compressedData = await compressAndEncodeBase64("hello world");
     const url = window.location.origin;
     ShareLink = `${url}/#import/${compressedData}`;
-    console.log("SHARE :: ShareLink:", ShareLink);
     navigator.clipboard.writeText(ShareLink);
 }
 
