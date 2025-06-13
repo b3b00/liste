@@ -2,6 +2,7 @@
 import { onMount } from "svelte";
 import { categories, sharedList } from "./store";
 import { decodeBase64AndDecompress } from "./zip";
+    import { push } from "svelte-spa-router"
 
 export let params:any = {};
 
@@ -15,6 +16,7 @@ onMount(async () => {
             const importedList = JSON.parse(decodedData);
             sharedList.set(importedList);
             console.log("IMPORT : Shopping list imported successfully!", importedList);
+            push("/list/In");
         } catch (error) {
             console.error("IMPORT : Error importing shopping list:", error);
             
@@ -34,8 +36,9 @@ $: {
             const importedList = JSON.parse(decodedData);
             sharedList.set(importedList);
             console.log("reactive : Shopping list imported successfully!", importedList);
+            push("/list/In");
         } catch (error) {
-            console.error("reactive : Error importing shopping list:", error);            
+            console.error("reactive : Error importing shopping list:", error);
         }
     } else {
         alert("reactive : No data provided for import.");
@@ -47,7 +50,7 @@ $: {
 
     <div>
 
-        <a href="/#/list/share"><h1>Liste importée</h1></a>
+        <a href="/#/list/In"><h1>Liste importée</h1></a>
 
         
         <ul>

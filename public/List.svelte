@@ -139,9 +139,14 @@
         }        
 
         function clean() {
+          if (mode == ListMode.In) {
+            $sharedList.list = [];
+          }
+          else {
             $list = [];
-            updateItemsByCategory();
-            updateSuggestions();
+          }
+          updateItemsByCategory();
+          updateSuggestions();
         }
 
         function showChecked(event : {selected:boolean}) {
@@ -263,11 +268,9 @@
 {:else}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white" on:click={() => showChecked({selected:false})}><EyeOffOutline></EyeOffOutline>Masquer les éléments barrés</Button>
 {/if}
-{#if mode != ListMode.In}
 <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:white; float:right" on:click={() => openConfirmDelete(true)} >
   <TrashCanOutline></TrashCanOutline>Tout effacer
 </Button>
-{/if}
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
                 {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.In) && content.items && content.items.length > 0)}
