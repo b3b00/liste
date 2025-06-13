@@ -8,7 +8,6 @@
     import Button, {Label} from '@smui/button';  
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
-    import {AppContent} from '@smui/drawer';
     import Cart from "svelte-material-icons/Cart.svelte";
     import FormatListBulleted from "svelte-material-icons/Shape.svelte";
     import Share  from 'svelte-material-icons/Share.svelte';
@@ -98,28 +97,28 @@
           <IconButton on:click={() => {$listMode = ListMode.Edit; push('/list');} } toggle>
             <Pen></Pen>
           </IconButton>
-          &nbsp;
+          <!-- &nbsp;
           <Button on:click={() => {$listMode = ListMode.Edit; push('/list');} }>
             <Label>Édition</Label>
-          </Button>
+          </Button> -->
         </Section>
         <Section align="end" toolbar>
           <IconButton on:click={() => {$listMode = ListMode.Shop; push('/list');}} toggle>
             <Cart></Cart>
           </IconButton>
-          &nbsp;
-          <Button on:click={() => {$listMode = ListMode.Shop; push('/list');} }>
+          <!-- &nbsp;
+          <Button on:click={() => {$listMode = ListMode.Shop; push('/list');} } >
             <Label>Courses</Label>
-          </Button>
+          </Button> -->
         </Section>
         <Section align="end" toolbar>
           <IconButton on:click={() => push('/categories')} toggle>
             <FormatListBulleted></FormatListBulleted>
           </IconButton>
-          &nbsp;
+          <!-- &nbsp;
           <Button on:click={() => push('/categories')}>
             <Label>Catégories</Label>
-          </Button>
+          </Button> -->
         </Section>
         <Section align="end" toolbar>
           <IconButton on:click={() => share()} toggle>
@@ -131,18 +130,16 @@
             <IconButton on:click={() => push('/list/In')} toggle>
               <Inbox></Inbox>
             </IconButton>
-            &nbsp;
+            <!-- &nbsp;
             <Button on:click={() => push('/list/In')}>
               <Label>liste reçue</Label>
-            </Button>
+            </Button> -->
           </Section>
           
         {/if}
       </Row>
     </TopAppBar>
-  <AppContent>
     <Router {routes}/>
-  </AppContent>
   
   
   
