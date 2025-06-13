@@ -16,8 +16,10 @@
     import Inbox from "svelte-material-icons/Inbox.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
-    import { listMode, list, sharedList } from "./store";
-    import ShareL from "./Share.svelte";
+    import { listMode, list, sharedList, categories } from "./store";
+    import {compressAndEncodeBase64, decodeBase64AndDecompress} from './zip';
+    
+
     
     list.useLocalStorage();
     sharedList.useLocalStorage();
@@ -26,7 +28,6 @@
       '/categories': Categories,
       '/list/:mode?': ShopList,
       '/': ShopList,
-      '/share': ShareL,
       '/import/:data': Import
       }
   
@@ -58,6 +59,27 @@
 
       let open = false;
 
+
+  let share = async () => {
+
+    const currentList = $list;
+    const currentCategories = $categories;
+
+    const data = {
+      list: currentList,
+      categories: currentCategories
+    };
+
+    const compressedData = await compressAndEncodeBase64(JSON.stringify(data));
+    const url = window.location.origin;
+    let shareLink = `${url}/#/import/${compressedData}`;
+
+    await navigator.share({
+      title: "Partage de la liste de course.",
+      text: "Voici la nouvelle liste.",
+      url: shareLink
+    });
+  }
       
 
   </script>
@@ -100,13 +122,9 @@
           </Button>
         </Section>
         <Section align="end" toolbar>
-          <IconButton on:click={() => push('/share')} toggle>
+          <IconButton on:click={() => share()} toggle>
             <Share></Share>
           </IconButton>
-          &nbsp;
-          <Button on:click={() => push('/share')}>
-            <label>Partager</label>
-          </Button>
         </Section>
         {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}
           <Section align="end" toolbar>
