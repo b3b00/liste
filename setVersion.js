@@ -43,7 +43,7 @@ try {
       console.log(git);
     }
     let sha1 = extractSha1(git).replace('\n','').replace('\r','');
-    console.log(`current has is ${sha1}`);
+    console.log(`current hash is ${sha1}`);
     setVersion(sha1,'./public/worker_template.js','./public/worker.js','public/version.json');
   } catch (error) {
     console.log(error);
