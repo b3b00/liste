@@ -16,6 +16,7 @@
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
     import {isDark} from './colors';
+    import { saveList } from "./client"
 
 
     list.useLocalStorage();
@@ -39,6 +40,13 @@
         let displayAll : boolean = true;
 
         export let params;
+
+        async function save() {
+            await saveList('id', {
+                categories: $categories,
+                list: $list
+            });
+        }
 
         function updateItemsByCategory() {
             itemsByCategory = {};
@@ -82,7 +90,7 @@
             updateSuggestions();
         })
 
-        function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
+        async function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
           if (!itemLbl || itemLbl == undefined || itemLbl === null || itemLbl === '') {
             return;
           }
@@ -103,11 +111,12 @@
                 categoryHistory = [...new Set(categoryHistory)];
                 history[itemCat] = categoryHistory;
                 $itemsHistory = history;
+                await save();
                 updateItemsByCategory();
                 updateSuggestions();
         }
 
-        function shop(itemId: number) {
+        async function shop(itemId: number) {
 
             let items = mode == ListMode.In ? $sharedList.list : $list;
             items = items.map( x => {
@@ -122,18 +131,20 @@
                 $list = items;
             }
             $list = items;
+            await save();
             updateItemsByCategory();
             updateSuggestions();
         }
 
-        function remove(itemId: number) {
+        async function remove(itemId: number) {
             let items = mode == ListMode.In ? $sharedList.list : $list;
-            items = items.filter( x => x.id !== itemId)            
+            items = items.filter( x => x.id !== itemId)
             if (mode !== ListMode.In) {
                 $sharedList.list = items;
             } else {
                 $list = items;
             }
+            await save();
             updateItemsByCategory();
             updateSuggestions();
         }        
@@ -182,7 +193,7 @@
         }
 
 
-        function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
+        async function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
           console.log("> moveToCategory()",item,destCategory)
           if (item && destCategory) {
             console.log(`moving ${item.id}-${item.label} to category ${destCategory.label}`,movingItem,destCategory);
@@ -202,6 +213,7 @@
 
           })
             $list = items;
+            await save();
             updateItemsByCategory();
             updateSuggestions();
           }
@@ -249,9 +261,9 @@
       {#each $categories as category}
         {#if category.label != movingItem?.category}
         <Item
-          on:click={() => {
+          on:click={async () => {
             console.log('on click category ',category);
-            moveToCategory(movingItem, category);
+            await moveToCategory(movingItem, category);
           }}
         >
           <Text style="font-weight:bold;align:center;color:{category.color}">{category.label.toUpperCase()} </Text>
@@ -284,7 +296,7 @@
                     {#if mode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
-                      <IconButton on:click={() => { 
+                      <IconButton on:click={async () => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
                           suggestionSelection[category] = "";
                           suggestionSelection = suggestionSelection;
@@ -303,7 +315,7 @@
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
-                                    <Button on:click={() => shop(categoryItem.id)} variant="raised"
+                                    <Button on:click={async () => await shop(categoryItem.id)} variant="raised"
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
                                       <Label style="color:{isDark(categoryItem.color) ? 'white' : 'black'}">{categoryItem.label}</Label>
                                     </Button>
@@ -316,7 +328,7 @@
                                       </Button>
                                       <Menu bind:this={menus[categoryItem.id]} anchorCorner="TOP_LEFT">
                                         <List>
-                                          <Item on:SMUI:action={() => remove(categoryItem.id)}>
+                                          <Item on:SMUI:action={async () => await remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
                                           {#if mode !== ListMode.In}
