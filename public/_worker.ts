@@ -83,6 +83,7 @@ async function renderJson(env:Env, request:IRequest, data :any) {
  
 router.get<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
     try {
+        console.log('GET /list/:id', request.params.id);
         const id = request.params.id;
         const p = await getList(env, id);
         if (p === undefined) {
@@ -102,9 +103,11 @@ router.get<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
 //   - id (string) : list id
 // body 
 router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:Env) => {
-    try {                        
+    try {
+        
         const id = request.params.id;
         const list = JSON.parse(await streamToText(request.body)) as SharedList
+        console.log('POST /list/:id',list);
         saveList(env, id, list);
         return renderOkJson(env,request,{});
 
@@ -122,6 +125,7 @@ router.put<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:E
     try {                        
         const id = request.params.id;
         const list = JSON.parse(await streamToText(request.body)) as SharedList
+        console.log('PUT /list/:id',list);
         saveList(env, id, list);
         return renderOkJson(env,request,{});
 

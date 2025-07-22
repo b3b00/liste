@@ -77,7 +77,6 @@
         }
 
         onMount(() => {
-
           mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; ;
             updateItemsByCategory();
             updateSuggestions();

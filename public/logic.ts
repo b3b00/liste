@@ -3,6 +3,7 @@ import type { SharedList } from "./model";
 export interface D1Result<T> {
     results: T[]
     success: boolean
+    meta : { rows_written: number, changes: number }
 }
 
 export async function getList(env: Env, id: string): Promise<SharedList | undefined> {
@@ -12,7 +13,7 @@ export async function getList(env: Env, id: string): Promise<SharedList | undefi
     )
         .bind(decodeURI(id))
         .all()
-    if (result.success) {
+    if (result.success && result.results.length > 0) {
         return JSON.parse(result.results[0].content) as SharedList;
     }
 
@@ -23,21 +24,26 @@ export async function saveList(env: Env, id: string, list :SharedList): Promise<
     console.log(`save list for id ${id}`,list,env);
     try {
     let l = await getList(env, id);
+
     if (l) {
-        const { success } = await env.D1_lists.prepare(
+        console.log(`updating list for id ${id}`,list);
+        const result:D1Result<SharedList> = await env.D1_lists.prepare(
         'update shoppingList set content=?1 where id=?2;'
     )
-        .bind(decodeURI(id), JSON.stringify(list))
-        .run()
-        return success;
+        .bind(JSON.stringify(list), decodeURI(id))
+        .run();
+         console.log("insert result", result);
+        return result.success;
     }
     else {
-        const { success } = await env.D1_lists.prepare(
-        'insert into shoppingList (id,content) values (?1,$2);'
+        console.log(`creating list for id ${id}`,list);
+        const result:D1Result<SharedList> = await env.D1_lists.prepare(
+        'insert into shoppingList (id,content) values (?1,?2);'
     )
         .bind(decodeURI(id), JSON.stringify(list))
         .run()
-        return success;
+        console.log("update result", result);
+        return result.success;
     }
     }
     catch(e) {
