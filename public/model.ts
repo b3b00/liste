@@ -23,3 +23,8 @@ export interface SharedList {
     categories: Category[],
     list: ShopItem[],
 }
+
+export interface SaveSettings {
+    id:string|null,
+    autoSave:boolean
+}
