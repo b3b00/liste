@@ -6,7 +6,7 @@
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
-    import {categories, list, itemsHistory} from './store';
+    import {categories, list, itemsHistory, listId} from './store';
     import {type Category} from './model';
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -16,6 +16,7 @@
     categories.useLocalStorage();
     list.useLocalStorage();
     itemsHistory.useLocalStorage();
+    listId.useLocalStorage();
 
     let open : boolean = false;
 
@@ -29,12 +30,12 @@
         })
 
 
-async function save() {
-    await saveList('id', {
-                    categories: $categories,
-                    list: $list
-                });
-}        
+    async function save() {
+        await saveList($listId, {
+            categories: $categories,
+            list: $list
+        });
+    }
 
     async function closeHandler(e: CustomEvent<{ action: string }>) {
         console.log(e);

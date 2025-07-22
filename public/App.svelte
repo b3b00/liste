@@ -1,8 +1,9 @@
 <script lang="ts">
   
     import Categories from "./Categories.svelte";
-    import ShopList from "./List.svelte";    
-    import Import from "./Import.svelte";    
+    import ShopList from "./List.svelte";
+    import Import from "./Import.svelte";
+    import ListSettings from "./ListSettings.svelte";
     import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     import Button, {Label} from '@smui/button';  
@@ -13,6 +14,7 @@
     import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
     import Inbox from "svelte-material-icons/Inbox.svelte";
+    import Settings from "svelte-material-icons/cog.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList, categories } from "./store";
@@ -27,7 +29,8 @@
       '/categories': Categories,
       '/list/:mode?': ShopList,
       '/': ShopList,
-      '/import/:data': Import
+      '/import/:data': Import,
+      '/settings': ListSettings
       }
   
   
@@ -123,6 +126,11 @@
         <Section align="end" toolbar>
           <IconButton on:click={() => share()} toggle>
             <Share></Share>
+          </IconButton>
+        </Section>
+         <Section align="end" toolbar>
+          <IconButton on:click={() => push('/settings')} toggle>
+            <Settings></Settings>
           </IconButton>
         </Section>
         {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}

@@ -38,4 +38,6 @@ const createWritableStore = <T>(key:string, startValue:T) => {
   export const listMode = writable<ListMode>(ListMode.Edit);
 
   export const sharedList = createWritableStore<SharedList>('sharedList',{categories:[],list:[]});
+
+  export const listId = createWritableStore<string>('listId','');
   
