@@ -26,14 +26,19 @@ export async function saveList(env: Env, id: string, list :SharedList): Promise<
     let l = await getList(env, id);
 
     if (l) {
+        if (list.categories.length > 0 && list.list.length > 0) {
         console.log(`updating list for id ${id}`,list);
         const result:D1Result<SharedList> = await env.D1_lists.prepare(
         'update shoppingList set content=?1 where id=?2;'
+
     )
         .bind(JSON.stringify(list), decodeURI(id))
         .run();
          console.log("insert result", result);
+
         return result.success;
+}
+return false;
     }
     else {
         console.log(`creating list for id ${id}`,list);
