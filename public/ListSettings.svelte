@@ -35,13 +35,6 @@
 </script>
 
 <div>
-    <div>
-        <h3>settings</h3>
-        <ul>
-            <li>Identifiant: {$settings.id}</li>
-            <li>Auto-save: {$settings.autoSave ? 'Activé' : 'Désactivé'}</li>
-        </ul>
-    </div>
 <FormField align="end">
     <Switch bind:checked={autosave} 
     on:SMUISwitch:change={() => {
