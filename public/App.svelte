@@ -14,7 +14,7 @@
     import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
     import Inbox from "svelte-material-icons/Inbox.svelte";
-    import Settings from "svelte-material-icons/cog.svelte";
+    import Cog from "svelte-material-icons/Cog.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList, categories } from "./store";
@@ -130,7 +130,7 @@
         </Section>
          <Section align="end" toolbar>
           <IconButton on:click={() => push('/settings')} toggle>
-            <Settings></Settings>
+            <Cog></Cog>
           </IconButton>
         </Section>
         {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}

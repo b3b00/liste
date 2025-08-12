@@ -47,7 +47,7 @@
     }}/>
       Sauvegarde automatique.
   </FormField>
-
+<br>
      <Textfield bind:value={id} label="Identifiant" outlined>
         <HelperText slot="helper">identifiant de la liste</HelperText>
     </Textfield>
