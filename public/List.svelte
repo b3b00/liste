@@ -286,7 +286,7 @@
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
-                                    <Button on:click={() => shop(categoryItem.id)} variant="raised"
+                                    <Button on:click={() => shop(categoryItem.id)} variant="raised" touch
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
                                       <Label style="color:{isDark(categoryItem.color) ? 'white' : 'black'}">{categoryItem.label}</Label>
                                     </Button>
