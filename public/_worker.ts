@@ -104,10 +104,10 @@ router.get<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
 // body 
 router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:Env) => {
     try {
-        
+        console.log('POST LIST...',request);
         const id = request.params.id;
         const list = JSON.parse(await streamToText(request.body)) as SharedList
-        console.log('POST /list/:id',list);
+        console.log(`POST /list/${id}`,list);
         saveList(env, id, list);
         return renderOkJson(env,request,{});
 
