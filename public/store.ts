@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Category } from './model';
+import type { Category, SharedList } from './model';
 import type { ShopItem } from './model';
 import { ListMode } from './model';
 
@@ -12,7 +12,6 @@ const createWritableStore = <T>(key:string, startValue:T) => {
       update,
       set,
       useLocalStorage: () => {
-        console.log(`reading ${key}`);
         const json = localStorage.getItem(key);
         if (json) {
           if (json !== 'undefined') {
@@ -22,7 +21,6 @@ const createWritableStore = <T>(key:string, startValue:T) => {
         }
 
         subscribe(current => {
-          console.log(`saving ${key} : ${current}`);
           localStorage.setItem(key, JSON.stringify(current));
         });
       }
@@ -39,5 +37,5 @@ const createWritableStore = <T>(key:string, startValue:T) => {
 
   export const listMode = writable<ListMode>(ListMode.Edit);
 
-  
+  export const sharedList = createWritableStore<SharedList>('sharedList',{categories:[],list:[]});
   

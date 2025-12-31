@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, itemsHistory, listMode } from './store';
+    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList } from './store';
     import {ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
@@ -22,16 +22,11 @@
     categories.useLocalStorage();
     displayDoneItems.useLocalStorage();
     itemsHistory.useLocalStorage();
+    sharedList.useLocalStorage();
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
 
         let openDelete: boolean = false;
-
-        let item : string = "";
-
-        let itemCategory : string = "";
-
-        let itemColor : string = "";
 
         let menus : {[item:string]:Menu} = {};
 
@@ -43,11 +38,16 @@
 
         let displayAll : boolean = true;
 
-        
+        export let params;
+
         function updateItemsByCategory() {
             itemsByCategory = {};
             let items = $list;
             let categos = $categories;
+            if (mode == ListMode.In) {
+              items = $sharedList.list;
+              categos = $sharedList.categories;
+            }
             categos.forEach(category => {
               let its = items.filter(x => { 
                   let selected = x.category == category.label && (!x.done || displayAll);
@@ -59,6 +59,7 @@
           }
 
         function updateSuggestions() {
+          if (mode !== ListMode.In) {
             for(let i = 0; i < $categories.length; i++) {
               const category = $categories[i];
               const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
@@ -66,9 +67,17 @@
               const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
               suggestions[category.label] = filteredSuggestions;
             }
+          }
+        }
+
+        $:{          
+          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit;
+            updateItemsByCategory();
+            updateSuggestions();
         }
 
         onMount(() => {
+          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; ;
             updateItemsByCategory();
             updateSuggestions();
         })
@@ -100,41 +109,49 @@
 
         function shop(itemId: number) {
 
-            let items = $list;
+            let items = mode == ListMode.In ? $sharedList.list : $list;
             items = items.map( x => {
                 if (x.id == itemId) {
                     x.done = !x.done;
                 }
                 return x; 
             })
+            if (mode !== ListMode.In) {
+                $sharedList.list = items;
+            } else {
+                $list = items;
+            }
             $list = items;
             updateItemsByCategory();
             updateSuggestions();
         }
 
         function remove(itemId: number) {
-            let items = $list;
-            items = items.filter( x => x.id !== itemId)
-            $list = items;
+            let items = mode == ListMode.In ? $sharedList.list : $list;
+            items = items.filter( x => x.id !== itemId)            
+            if (mode !== ListMode.In) {
+                $sharedList.list = items;
+            } else {
+                $list = items;
+            }
             updateItemsByCategory();
             updateSuggestions();
-        }
-        function move(itemId: number) {
-            let items = $list;
-            updateItemsByCategory();
-            updateSuggestions();
-        }
+        }        
 
         function clean() {
+          if (mode == ListMode.In) {
+            $sharedList.list = [];
+          }
+          else {
             $list = [];
-            updateItemsByCategory();
-            updateSuggestions();
+          }
+          updateItemsByCategory();
+          updateSuggestions();
         }
 
         function showChecked(event : {selected:boolean}) {
           $displayDoneItems = event.selected;
           displayAll = event.selected;
-          console.log(`check : ${displayAll} - ${$displayDoneItems}`);
           updateItemsByCategory();
         }
 
@@ -256,7 +273,7 @@
 </Button>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-                {#if $listMode == ListMode.Edit || ($listMode == ListMode.Shop && content.items && content.items.length > 0)}
+                {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.In) && content.items && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -264,7 +281,7 @@
                         <Text>
                       {category} 
                     </Text>
-                    {#if $listMode == ListMode.Edit}
+                    {#if mode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
                       <IconButton on:click={() => { 
@@ -302,9 +319,11 @@
                                           <Item on:SMUI:action={() => remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
+                                          {#if mode !== ListMode.In}
                                           <Item on:SMUI:action={() => openMoveDialog(categoryItem)}>
                                             <Text>Déplacer</Text>
                                           </Item>
+                                          {/if}
                                         </List>
                                       </Menu>
                                     </div>
