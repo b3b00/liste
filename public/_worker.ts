@@ -15,7 +15,7 @@ type LRequest = {
     id: string;
     postQuery:any;
   } & IRequest
-  
+
   // create a convenient duple
   type CF = [env: Env, context: ExecutionContext]
 
@@ -102,11 +102,14 @@ router.get<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
 // path parameters
 //   - id (string) : list id
 // body 
-router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:Env) => {
+router.post<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
     try {
         console.log('POST LIST...',request);
-        const id = request.params.id;
-        const list = JSON.parse(await streamToText(request.body)) as SharedList
+        //const id = request.params.id;
+        const id = "test";
+        const body = await streamToText(request.body);
+        console.log("POST",body);
+        const list = JSON.parse(body) as SharedList
         console.log(`POST /list/${id}`,list);
         saveList(env, id, list);
         return renderOkJson(env,request,{});
@@ -121,10 +124,13 @@ router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:
 // path parameters
 //   - id (string) : list id
 // body 
-router.put<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:Env) => {    
+router.put<IRequest, CF>('/list/:id',  async (request:IRequest, env:Env) => {
     try {                        
-        const id = request.params.id;
-        const list = JSON.parse(await streamToText(request.body)) as SharedList
+        //const id = request.params.id;
+        const id = "test";
+        const body = await streamToText(request.body);
+        console.log("PUT",body);
+        const list = JSON.parse(body) as SharedList
         console.log('PUT /list/:id',list);
         saveList(env, id, list);
         return renderOkJson(env,request,{});
