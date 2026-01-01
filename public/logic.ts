@@ -8,13 +8,19 @@ export interface D1Result<T> {
 
 export async function getList(env: Env, id: string): Promise<SharedList | undefined> {
     console.log(`get list for id ${id}`,env);
-    const result: D1Result<{id:string, content:string}> = await env.D1_lists.prepare(
-        'SELECT * FROM shoppingList WHERE id=?1 '
-    )
-        .bind(decodeURI(id))
-        .all()
-    if (result.success && result.results.length > 0) {
-        return JSON.parse(result.results[0].content) as SharedList;
+    try {
+        const result: D1Result<{id:string, content:string}> = await env.D1_lists.prepare(
+            'SELECT * FROM shoppingList WHERE id=?1 '
+        )
+            .bind(decodeURI(id))
+            .all()
+        if (result.success && result.results.length > 0) {
+            return JSON.parse(result.results[0].content) as SharedList;
+        }
+    }
+    catch(e : any) {
+        console.log(e);
+        return undefined;
     }
 
     return undefined

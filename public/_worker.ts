@@ -111,7 +111,7 @@ router.post<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
         console.log("POST",body);
         const list = JSON.parse(body) as SharedList
         console.log(`POST /list/${id}`,list);
-        saveList(env, id, list);
+        await saveList(env, id, list);
         return renderOkJson(env,request,{});
 
     } catch (e :any) {
@@ -132,7 +132,7 @@ router.put<IRequest, CF>('/list/:id',  async (request:IRequest, env:Env) => {
         console.log("PUT",body);
         const list = JSON.parse(body) as SharedList
         console.log('PUT /list/:id',list);
-        saveList(env, id, list);
+        await saveList(env, id, list);
         return renderOkJson(env,request,{});
 
     } catch (e :any) {
