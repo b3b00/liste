@@ -96,7 +96,7 @@
     </Button>
     <div id="version-info">
         {#if $versionInfo}
-            <Paper square variant="outlined" color:"secondary">
+            <Paper square variant="outlined" color="secondary">
                 <Title>Outlined Square Paper</Title>
                 <Content><Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
                 <Label>{$versionInfo.version}</Label>
