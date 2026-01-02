@@ -8,8 +8,7 @@
     import { saveList, getList, getVersion } from "./client"
     import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
-    import Paper, { Title, Content } from '@smui/paper';
-    
+
 
     list.useLocalStorage();
     settings.useLocalStorage();
@@ -96,12 +95,9 @@
     </Button>
     <div id="version-info">
         {#if $versionInfo}
-            <Paper square variant="outlined" color="secondary">
-                <Title>Outlined Square Paper</Title>
-                <Content><Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
+            <Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
                 <Label>{$versionInfo.version}</Label>
-            </Button></Content>
-            </Paper>
+            </Button>
         {/if}
     </div>
 </div>
