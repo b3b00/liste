@@ -62,7 +62,7 @@
       let open = false;
 
 
-  let share = async () => {
+  async function shareList() {
 
     const currentList = $list;
     const currentCategories = $categories;
@@ -124,7 +124,7 @@
           </Button> -->
         </Section>
         <Section align="end" toolbar>
-          <IconButton on:click={() => share()} toggle>
+          <IconButton on:click={() => shareList()} toggle>
             <Share></Share>
           </IconButton>
         </Section>
