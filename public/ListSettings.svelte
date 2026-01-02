@@ -38,6 +38,49 @@
         }
     }
 
+    function downloadJSON() {
+        const data = {
+            categories: $categories,
+            list: $list
+        };
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `liste-${id || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function uploadJSON() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json,.json';
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                if (data.categories && data.list) {
+                    $categories = data.categories;
+                    $list = data.list;
+                    window.alert('Liste importée avec succès !');
+                } else {
+                    window.alert('Format JSON invalide. Le fichier doit contenir "categories" et "list".');
+                }
+            } catch (error) {
+                window.alert(`Erreur lors de l'import: ${error.message}`);
+            }
+        };
+        input.click();
+    }
+
 </script>
 
 <style>
@@ -73,7 +116,7 @@
          };
         await save();
     }} variant="raised">
-        <Label>Enregistrer</Label>
+        <Label><Icon class="material-icons">save</Icon>Enregistrer</Label>
     </Button>
 
     <Button on:click={async () => {
@@ -91,8 +134,19 @@
             window.alert(`Impossible de charger la liste ${id}`);
         }
     }} variant="raised">
-        <Label>Recharger</Label>
+        <Label><Icon class="material-icons">refresh</Icon>Recharger</Label>
     </Button>
+<br/>
+    <Button on:click={downloadJSON} variant="raised">
+        <Icon class="material-icons">download</Icon>
+        <Label>Exporter</Label>
+    </Button>
+
+    <Button on:click={uploadJSON} variant="raised">
+        <Icon class="material-icons">upload</Icon>
+        <Label>Importer</Label>
+    </Button>
+
     <div id="version-info">
         {#if $versionInfo}
             <Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
