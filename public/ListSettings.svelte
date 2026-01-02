@@ -8,7 +8,6 @@
     import { saveList, getList, getVersion } from "./client"
      import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
-    import type { VersionInfo } from "./model"
     
 
     list.useLocalStorage();
@@ -40,6 +39,15 @@
     }
 
 </script>
+
+<style>
+    #version-info {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        text-align: right;
+    }
+</style>
 
 <div>
 <FormField align="end">
@@ -85,4 +93,12 @@
     }} variant="raised">
         <Label>Recharger</Label>
     </Button>
+    <div id="version-info">
+        {#if $versionInfo}
+        <Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
+            <Label>{$versionInfo.version}</Label>
+        </Button>
+        {/if}
+    </div>
 </div>
+
