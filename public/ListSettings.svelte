@@ -85,7 +85,7 @@
             };
             $list = reloaded.list;
             $categories = reloaded.categories;
-            await save();
+            //await save();
         }
         else {
             window.alert(`Impossible de charger la liste ${id}`);
