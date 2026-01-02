@@ -50,9 +50,14 @@
         a.href = url;
         a.download = `liste-${id || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Chrome requires a small delay for programmatic clicks
+        setTimeout(() => {
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }, 0);
     }
 
     function uploadJSON() {
@@ -74,7 +79,7 @@
                 } else {
                     window.alert('Format JSON invalide. Le fichier doit contenir "categories" et "list".');
                 }
-            } catch (error) {
+            } catch (error:any) {
                 window.alert(`Erreur lors de l'import: ${error.message}`);
             }
         };
