@@ -42,7 +42,7 @@
 
         export let params;
         async function save() {
-        if ($settings.autoSave) {
+        if ($settings.autoSave && $settings.id) {
                 await saveList($settings.id, {
                     categories: $categories,
                     list: $list
@@ -91,7 +91,7 @@
           mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; 
             updateItemsByCategory();
             updateSuggestions();
-            $versionInfo = await getVersion();
+            $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
         })
 
         async function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
