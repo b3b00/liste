@@ -55,7 +55,7 @@
             itemsByCategory = {};
             let items = $list;
             let categos = $categories;
-            if (mode == ListMode.In) {
+            if (mode == ListMode.Inbox) {
               items = $sharedList.list;
               categos = $sharedList.categories;
             }
@@ -70,7 +70,7 @@
           }
 
         function updateSuggestions() {
-          if (mode !== ListMode.In) {
+          if (mode !== ListMode.Inbox) {
             for(let i = 0; i < $categories.length; i++) {
               const category = $categories[i];
               const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
@@ -82,13 +82,13 @@
         }
 
         $:{
-          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit;
+          mode = (params.mode && params.mode == "In"? ListMode.Inbox : $listMode) ?? ListMode.Edit;
             updateItemsByCategory();
             updateSuggestions();
         }
 
         onMount(async () => {
-          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; 
+          mode = (params.mode && params.mode == "In"? ListMode.Inbox : $listMode) ?? ListMode.Edit; 
             updateItemsByCategory();
             updateSuggestions();
             $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
@@ -122,14 +122,14 @@
 
         async function shop(itemId: number) {
 
-            let items = mode == ListMode.In ? $sharedList.list : $list;
+            let items = mode == ListMode.Inbox ? $sharedList.list : $list;
             items = items.map( x => {
                 if (x.id == itemId) {
                     x.done = !x.done;
                 }
                 return x; 
             })
-            if (mode !== ListMode.In) {
+            if (mode !== ListMode.Inbox) {
                 $sharedList.list = items;
             } else {
                 $list = items;
@@ -141,12 +141,13 @@
         }
 
         async function remove(itemId: number) {
-            let items = mode == ListMode.In ? $sharedList.list : $list;
+          
+            let items = mode == ListMode.Inbox ? $sharedList.list : $list;
             items = items.filter( x => x.id !== itemId)
-            if (mode !== ListMode.In) {
-                $sharedList.list = items;
-            } else {
+            if (mode !== ListMode.Inbox) {
                 $list = items;
+            } else {
+                $sharedList.list = items;
             }
             await save();
             updateItemsByCategory();
@@ -154,7 +155,7 @@
         }        
 
         function clean() {
-          if (mode == ListMode.In) {
+          if (mode == ListMode.Inbox) {
             $sharedList.list = [];
           }
           else {
@@ -289,7 +290,7 @@
 </Button>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-                {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.In) && content.items && content.items.length > 0)}
+                {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.Inbox) && content.items && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -335,7 +336,7 @@
                                           <Item on:SMUI:action={async () => await remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
-                                          {#if mode !== ListMode.In}
+                                          {#if mode !== ListMode.Inbox}
                                           <Item on:SMUI:action={() => openMoveDialog(categoryItem)}>
                                             <Text>Déplacer</Text>
                                           </Item>
