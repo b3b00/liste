@@ -1,30 +1,33 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, settings, categories } from './store';
+    import { list, settings, categories, versionInfo } from './store';
      import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
-    import { saveList, getList } from "./client"
+    import { saveList, getList, getVersion } from "./client"
      import Switch from '@smui/switch';
-  import FormField from '@smui/form-field';
+    import FormField from '@smui/form-field';
+    import type { VersionInfo } from "./model"
     
 
     list.useLocalStorage();
     settings.useLocalStorage();
     categories.useLocalStorage();
+    versionInfo.useLocalStorage();
 
     let id = '';
 
     let autosave : boolean = false;
 
-    let version : string = '0.0.0';
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
 
-    onMount(() => {
+    onMount(async () => {
         id = $settings.id || '';
         autosave = $settings.autoSave;
+        //version = await getVersion();
+        $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
     });
 
     async function save() {

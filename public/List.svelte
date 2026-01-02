@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList, settings } from './store';
+    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList, settings, versionInfo } from './store';
     import {ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
@@ -16,7 +16,7 @@
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
     import {isDark} from './colors';
-    import { saveList } from "./client"
+    import { getVersion, saveList } from "./client"
 
 
     list.useLocalStorage();
@@ -87,10 +87,11 @@
             updateSuggestions();
         }
 
-        onMount(() => {
-          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; ;
+        onMount(async () => {
+          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; 
             updateItemsByCategory();
             updateSuggestions();
+            $versionInfo = await getVersion();
         })
 
         async function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {

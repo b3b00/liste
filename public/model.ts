@@ -28,3 +28,8 @@ export interface SaveSettings {
     id:string|null,
     autoSave:boolean
 }
+
+export interface VersionInfo {
+    version: string,
+    hash?: string
+}

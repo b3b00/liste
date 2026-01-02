@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Category, SharedList, SaveSettings } from './model';
+import type { Category, SharedList, SaveSettings, VersionInfo } from './model';
 import type { ShopItem } from './model';
 import { ListMode } from './model';
 
@@ -40,4 +40,6 @@ const createWritableStore = <T>(key:string, startValue:T) => {
   export const sharedList = createWritableStore<SharedList>('sharedList',{categories:[],list:[]});
 
   export const settings = createWritableStore<SaveSettings>('settings',{id:null,autoSave:false});
+
+  export const versionInfo = createWritableStore<VersionInfo>('versionInfo',{version:'0.0.0', hash:undefined});
   

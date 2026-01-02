@@ -1,4 +1,4 @@
-import { type SharedList } from "./model"
+import { type SharedList, type VersionInfo } from "./model"
 
 export const getList = async (id: string): Promise<SharedList | undefined> => {
     console.log(`Fetching list with id ${id}`);
@@ -51,14 +51,14 @@ export const saveList = async (id: string, list: SharedList): Promise<boolean> =
     }
 }
 
-export const getVersion = async (): Promise<string | undefined> => {
+export const getVersion = async (): Promise<VersionInfo | undefined> => {
     console.log(`Fetching version`);
     let url = `version.json`;
     const response = await fetch(url, { method: 'GET' });
     if (response.ok) {
         const data = await response.json();
         console.log(`Fetched version`, data);
-        return data.version as string;
+        return data as VersionInfo;
     } else {
         console.error(`Error fetching version:`, response.statusText);
         return undefined;
