@@ -2,12 +2,13 @@
 
     import { onMount } from "svelte";
     import { list, settings, categories, versionInfo } from './store';
-     import Button, {Label, Icon} from '@smui/button';  
+    import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import { saveList, getList, getVersion } from "./client"
-     import Switch from '@smui/switch';
+    import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
+    import Paper, { Title, Content } from '@smui/paper';
     
 
     list.useLocalStorage();
@@ -95,9 +96,12 @@
     </Button>
     <div id="version-info">
         {#if $versionInfo}
-        <Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
-            <Label>{$versionInfo.version}</Label>
-        </Button>
+            <Paper square variant="outlined" color:"secondary">
+                <Title>Outlined Square Paper</Title>
+                <Content><Button onclick={() => {}} href="https://github.com/b3b00/liste/commit/{$versionInfo.hash}" target="_blank">
+                <Label>{$versionInfo.version}</Label>
+            </Button></Content>
+            </Paper>
         {/if}
     </div>
 </div>
