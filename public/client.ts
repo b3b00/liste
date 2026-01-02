@@ -50,3 +50,17 @@ export const saveList = async (id: string, list: SharedList): Promise<boolean> =
         return false;
     }
 }
+
+export const getVersion = async (): Promise<string | undefined> => {
+    console.log(`Fetching version`);
+    let url = `version.json`;
+    const response = await fetch(url, { method: 'GET' });
+    if (response.ok) {
+        const data = await response.json();
+        console.log(`Fetched version`, data);
+        return data.version as string;
+    } else {
+        console.error(`Error fetching version:`, response.statusText);
+        return undefined;
+    }
+}

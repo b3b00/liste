@@ -18,6 +18,10 @@
 
     let autosave : boolean = false;
 
+    let version : string = '0.0.0';
+
+     $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
+
     onMount(() => {
         id = $settings.id || '';
         autosave = $settings.autoSave;
