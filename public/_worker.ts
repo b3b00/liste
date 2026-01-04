@@ -1,15 +1,20 @@
 // NOTE : _worker.js must be place at the root of the output dir == ./public for this app
 
 import { Router, withParams, withContent, error, type IRequest  } from 'itty-router'
-import { type KVNamespace, type ExecutionContext, type ScheduledController } from '@cloudflare/workers-types'
+import { type KVNamespace, type ExecutionContext, type ScheduledController, type D1Database, type Fetcher } from '@cloudflare/workers-types'
 import { get } from 'svelte/store'
 import { getList, saveList, getUserLists } from './logic'
 import type { SharedList } from './model'
 import { withAuth, type AuthenticatedRequest, exchangeCodeForTokens, getUserInfo, saveUser } from './auth'
 
-
-
-// declare what's available in our env
+// Env interface - this should match worker-configuration.d.ts
+interface Env {
+    D1_lists: D1Database;
+    GOOGLE_CLIENT_ID: string;
+    GOOGLE_CLIENT_SECRET: string;
+    GOOGLE_REDIRECT_URI: string;
+    ASSETS: Fetcher;
+}
 
 
 type LRequest = {
@@ -120,12 +125,17 @@ router.get<IRequest, CF>('/auth/callback', async (request: IRequest, env: Env) =
             <head><title>Login Successful</title></head>
             <body>
                 <script>
+                    // Store all user data
                     localStorage.setItem('google_id_token', '${tokens.id_token}');
                     localStorage.setItem('user_id', '${userInfo.id}');
                     localStorage.setItem('user_email', '${userInfo.email}');
                     localStorage.setItem('user_name', '${userInfo.name}');
                     localStorage.setItem('user_picture', '${userInfo.picture}');
-                    window.location.href = '/';
+                    
+                    // Wait a moment to ensure localStorage is written, then redirect
+                    setTimeout(() => {
+                        window.location.replace('/app.html');
+                    }, 100);
                 </script>
                 <p>Login successful! Redirecting...</p>
             </body>
@@ -243,8 +253,38 @@ router.put<AuthenticatedRequest, CF>('/list/:id', withAuth, async (request: Auth
     }
 })
 
-
-
+// Auth check for root path - serve a page that checks localStorage
+router.get('/', async (request: IRequest, env: Env) => {
+    // Serve a simple HTML page that checks auth and redirects if needed
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Listes</title>
+</head>
+<body>
+    <script>
+        // Check for token
+        const token = localStorage.getItem('google_id_token');
+        console.log('Root route check - token exists:', !!token);
+        
+        if (!token) {
+            console.log('No token found, redirecting to login');
+            window.location.replace('/auth/login');
+        } else {
+            console.log('Token found, loading app');
+            // User is authenticated, load the app
+            window.location.replace('/app.html');
+        }
+    </script>
+    <p style="text-align: center; margin-top: 50px;">Loading...</p>
+</body>
+</html>`;
+    
+    return new Response(html, {
+        headers: { 'Content-Type': 'text/html' }
+    });
+});
 
 router.all('*', (request, env) => {
     console.log('assets handler')
