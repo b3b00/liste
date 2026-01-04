@@ -1,4 +1,55 @@
 import { type SharedList, type VersionInfo } from "./model"
+import Pusher from 'pusher-js';
+
+let pusherClient: Pusher | null = null;
+let currentSubscription: any = null;
+
+/**
+ * Subscribe to real-time updates for a specific list
+ */
+export const subscribeToList = (listId: string, onUpdate: (list: SharedList) => void): void => {
+    // Initialize Pusher client if not already done
+    if (!pusherClient) {
+        // Get Pusher key from the page (you'll need to inject this from your worker)
+        const pusherKey = (window as any).PUSHER_KEY || 'your-app-key';
+        const pusherCluster = (window as any).PUSHER_CLUSTER || 'your-cluster';
+        
+        pusherClient = new Pusher(pusherKey, {
+            cluster: pusherCluster,
+        });
+    }
+
+    // Unsubscribe from previous list if any
+    if (currentSubscription) {
+        currentSubscription.unbind_all();
+        currentSubscription.unsubscribe();
+    }
+
+    // Subscribe to the list's channel
+    const channel = pusherClient.subscribe(`list-${listId}`);
+    
+    channel.bind('list-updated', (data: any) => {
+        console.log('Received list update:', data);
+        onUpdate({
+            categories: data.categories,
+            list: data.list
+        });
+    });
+
+    currentSubscription = channel;
+    console.log(`Subscribed to list ${listId}`);
+}
+
+/**
+ * Unsubscribe from all Pusher channels
+ */
+export const unsubscribeFromList = (): void => {
+    if (currentSubscription) {
+        currentSubscription.unbind_all();
+        currentSubscription.unsubscribe();
+        currentSubscription = null;
+    }
+}
 
 export const getList = async (id: string): Promise<SharedList | undefined> => {
     console.log(`Fetching list with id ${id}`);

@@ -2,5 +2,7 @@
 // by running `wrangler types`
 
 interface Env {
-		D1_lists: D1Database;
-}
+		D1_lists: D1Database;		PUSHER_APP_ID: string;
+		PUSHER_KEY: string;
+		PUSHER_SECRET: string;
+		PUSHER_CLUSTER: string;}

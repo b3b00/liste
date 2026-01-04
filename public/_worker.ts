@@ -5,6 +5,7 @@ import { type KVNamespace, type ExecutionContext, type ScheduledController } fro
 import { get } from 'svelte/store'
 import { getList, saveList } from './logic'
 import type { SharedList } from './model'
+import { broadcastUpdate } from './pusher'
 
 
 
@@ -112,6 +113,8 @@ router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:
         const list = JSON.parse(body) as SharedList
         console.log(`POST /list/${id}`,list);
         await saveList(env, id, list);
+        // Broadcast update to all connected clients
+        await broadcastUpdate(env, id, list);
         return renderOkJson(env,request,{});
 
     } catch (e :any) {
@@ -133,6 +136,8 @@ router.put<IRequest, CF>('/list/:id',  async (request:IRequest, env:Env) => {
         const list = JSON.parse(body) as SharedList
         console.log('PUT /list/:id',list);
         await saveList(env, id, list);
+        // Broadcast update to all connected clients
+        await broadcastUpdate(env, id, list);
         return renderOkJson(env,request,{});
 
     } catch (e :any) {

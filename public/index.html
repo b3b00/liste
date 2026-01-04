@@ -33,6 +33,11 @@
 	<meta name="theme-color" content="#00a2dd"/>
 	<link rel="icon" href="/images/icons/icon-192x192.png">
 	<link rel="stylesheet"  href="https://cdn.jsdelivr.net/npm/svelte-material-ui@7.0.0/bare.min.css"/>
+	<script>
+		// Inject Pusher configuration for client-side use
+		window.PUSHER_KEY = 'your-app-key';
+		window.PUSHER_CLUSTER = 'your-cluster';
+	</script>
 </head>
 
 <body>
