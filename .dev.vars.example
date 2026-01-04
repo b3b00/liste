@@ -1,0 +1,5 @@
+# Copy this file to .dev.vars and fill in your credentials
+# .dev.vars is gitignored and used for local development
+
+# Google OAuth2 credentials
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
