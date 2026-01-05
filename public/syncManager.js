@@ -100,9 +100,38 @@ class SyncManager {
         }
     }
     notifyListChanges(oldList, newList) {
+        console.log('[NOTIFY] List changes - old:', oldList.length, 'items, new:', newList.length, 'items');
         const oldMap = new Map(oldList.map(item => [item.id, item]));
         const newMap = new Map(newList.map(item => [item.id, item]));
         const messages = [];
+        // Detect potential category renames by finding items that moved from same old category to same new category
+        const categoryChanges = new Map(); // old -> new -> Set of item IDs
+        for (const [id, newItem] of newMap) {
+            const oldItem = oldMap.get(id);
+            if (oldItem && oldItem.category !== newItem.category) {
+                if (!categoryChanges.has(oldItem.category)) {
+                    categoryChanges.set(oldItem.category, new Map());
+                }
+                const targetMap = categoryChanges.get(oldItem.category);
+                if (!targetMap.has(newItem.category)) {
+                    targetMap.set(newItem.category, new Set());
+                }
+                targetMap.get(newItem.category).add(id);
+            }
+        }
+        // If multiple items (3+) all moved from same old category to same new category, it's likely a rename
+        const categoryRenames = new Set(); // Set of "oldCat->newCat" pairs to ignore
+        for (const [oldCat, targetMap] of categoryChanges) {
+            // Check if all items from this old category went to a single new category
+            if (targetMap.size === 1) {
+                const [newCat, itemIds] = Array.from(targetMap.entries())[0];
+                // If 3 or more items moved together, treat it as a category rename
+                if (itemIds.size >= 3) {
+                    categoryRenames.add(`${oldCat}->${newCat}`);
+                    console.log('[NOTIFY] Detected category rename via item moves:', oldCat, '→', newCat, `(${itemIds.size} items)`);
+                }
+            }
+        }
         // Check for added items
         for (const [id, newItem] of newMap) {
             if (!oldMap.has(id)) {
@@ -126,6 +155,12 @@ class SyncManager {
                 }
                 // Check if category changed (moved to different category)
                 if (oldItem.category !== newItem.category) {
+                    // Skip notification if this is just a category rename
+                    const renameKey = `${oldItem.category}->${newItem.category}`;
+                    if (categoryRenames.has(renameKey)) {
+                        console.log('[NOTIFY] Skipping item move notification for', newItem.label, '- category was renamed');
+                        continue;
+                    }
                     messages.push(`📦 ${t('item.moved', { name: newItem.label, oldCategory: oldItem.category, newCategory: newItem.category })}`);
                     continue; // Don't report other changes when moving categories
                 }
@@ -141,11 +176,14 @@ class SyncManager {
             }
         }
         // Show notifications
+        console.log('[NOTIFY] List notifications to show:', messages);
         messages.forEach(msg => {
+            console.log('[NOTIFY] Showing list notification:', msg);
             notifications.show(msg, 'info', 5000);
         });
     }
     notifyCategoryChanges(oldCategories, newCategories) {
+        console.log('[NOTIFY] Category changes - old:', oldCategories.length, 'categories, new:', newCategories.length, 'categories');
         const messages = [];
         // Build maps of category names to their positions
         const oldNameToIndex = new Map(oldCategories.map((c, i) => [c.label, i]));
@@ -153,16 +191,38 @@ class SyncManager {
         // Build maps of category names to their full objects
         const oldNameToCategory = new Map(oldCategories.map(c => [c.label, c]));
         const newNameToCategory = new Map(newCategories.map(c => [c.label, c]));
+        // Track which categories we've already reported on to avoid duplicates
+        const reportedOldNames = new Set();
+        const reportedNewNames = new Set();
+        // First, check for renames (same position, different name, neither moved)
+        const minLength = Math.min(oldCategories.length, newCategories.length);
+        for (let i = 0; i < minLength; i++) {
+            const oldCat = oldCategories[i];
+            const newCat = newCategories[i];
+            if (oldCat.label !== newCat.label) {
+                // Check if old name doesn't exist in new list and new name doesn't exist in old list
+                const oldNameGone = !newNameToIndex.has(oldCat.label);
+                const newNameNew = !oldNameToIndex.has(newCat.label);
+                if (oldNameGone && newNameNew) {
+                    // This is a rename at the same position
+                    messages.push(`✏️ ${t('category.renamed', { oldName: oldCat.label, newName: newCat.label })}`);
+                    reportedOldNames.add(oldCat.label);
+                    reportedNewNames.add(newCat.label);
+                }
+            }
+        }
         // Check for added categories (names that exist in new but not in old)
         for (const [name, newIndex] of newNameToIndex) {
-            if (!oldNameToIndex.has(name)) {
+            if (!oldNameToIndex.has(name) && !reportedNewNames.has(name)) {
                 messages.push(`📂 ${t('category.added', { name })}`);
+                reportedNewNames.add(name);
             }
         }
         // Check for removed categories (names that exist in old but not in new)
         for (const [name, oldIndex] of oldNameToIndex) {
-            if (!newNameToIndex.has(name)) {
+            if (!newNameToIndex.has(name) && !reportedOldNames.has(name)) {
                 messages.push(`🗑️ ${t('category.removed', { name })}`);
+                reportedOldNames.add(name);
             }
         }
         // Check for moved categories (same name, different position)
@@ -179,7 +239,7 @@ class SyncManager {
                 }
             }
         }
-        // Check for color changes (same name, same or different position, but different color)
+        // Check for color changes (same name, but different color)
         for (const [name, newCat] of newNameToCategory) {
             const oldCat = oldNameToCategory.get(name);
             if (oldCat && oldCat.color !== newCat.color) {
@@ -187,7 +247,9 @@ class SyncManager {
             }
         }
         // Show notifications
+        console.log('[NOTIFY] Category notifications to show:', messages);
         messages.forEach(msg => {
+            console.log('[NOTIFY] Showing category notification:', msg);
             notifications.show(msg, 'info', 5000);
         });
     }
