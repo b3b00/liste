@@ -9,11 +9,9 @@ interface Session {
 
 export class ListSync {
     private sessions: Set<Session>;
-    private state: DurableObjectState;
     private env: Env;
     
     constructor(state: DurableObjectState, env: Env) {
-        this.state = state;
         this.env = env;
         this.sessions = new Set();
     }
