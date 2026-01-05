@@ -2,8 +2,7 @@
 
 import { list, categories } from './store';
 import { get } from 'svelte/store';
-import { notifications } from './notifications';
-
+import { notifications } from './notifications';import { t } from './i18n';
 class SyncManager {
     private ws: WebSocket | null = null;
     private reconnectTimeout: number | null = null;
@@ -128,14 +127,14 @@ class SyncManager {
         // Check for added items
         for (const [id, newItem] of newMap) {
             if (!oldMap.has(id)) {
-                messages.push(`📥 Item "${newItem.label}" added`);
+                messages.push(`📥 ${t('item.added', { name: newItem.label })}`);
             }
         }
         
         // Check for removed items
         for (const [id, oldItem] of oldMap) {
             if (!newMap.has(id)) {
-                messages.push(`🗑️ Item "${oldItem.label}" removed`);
+                messages.push(`🗑️ ${t('item.removed', { name: oldItem.label })}`);
             }
         }
         
@@ -143,36 +142,25 @@ class SyncManager {
         for (const [id, newItem] of newMap) {
             const oldItem = oldMap.get(id);
             if (oldItem) {
-                const changes: string[] = [];
-                
                 // Check if label changed (renamed)
                 if (oldItem.label !== newItem.label) {
-                    messages.push(`✏️ Item renamed: "${oldItem.label}" → "${newItem.label}"`);
+                    messages.push(`✏️ ${t('item.renamed', { oldName: oldItem.label, newName: newItem.label })}`);
                     continue; // Skip other checks for renamed items
                 }
                 
-                // Check if category changed
+                // Check if category changed (moved to different category)
                 if (oldItem.category !== newItem.category) {
-                    changes.push(`category: ${oldItem.category} → ${newItem.category}`);
+                    messages.push(`📦 ${t('item.moved', { name: newItem.label, oldCategory: oldItem.category, newCategory: newItem.category })}`);
+                    continue; // Don't report other changes when moving categories
                 }
                 
                 // Check if done status changed
                 if (oldItem.done !== newItem.done) {
                     if (newItem.done) {
-                        changes.push('marked as done');
+                        messages.push(`✓ ${t('item.done', { name: newItem.label })}`);
                     } else {
-                        changes.push('marked as not done');
+                        messages.push(`○ ${t('item.notDone', { name: newItem.label })}`);
                     }
-                }
-                
-                // Check if color changed
-                if (oldItem.color !== newItem.color) {
-                    changes.push('color changed');
-                }
-                
-                // Show notification for this item if there are changes
-                if (changes.length > 0) {
-                    messages.push(`✏️ Item "${newItem.label}": ${changes.join(', ')}`);
                 }
             }
         }
@@ -197,14 +185,14 @@ class SyncManager {
         // Check for added categories (names that exist in new but not in old)
         for (const [name, newIndex] of newNameToIndex) {
             if (!oldNameToIndex.has(name)) {
-                messages.push(`📂 Category "${name}" added`);
+                messages.push(`📂 ${t('category.added', { name })}`);
             }
         }
         
         // Check for removed categories (names that exist in old but not in new)
         for (const [name, oldIndex] of oldNameToIndex) {
             if (!newNameToIndex.has(name)) {
-                messages.push(`🗑️ Category "${name}" removed`);
+                messages.push(`🗑️ ${t('category.removed', { name })}`);
             }
         }
         
@@ -213,11 +201,11 @@ class SyncManager {
             const oldIndex = oldNameToIndex.get(name);
             if (oldIndex !== undefined && oldIndex !== newIndex) {
                 if (newIndex < oldIndex) {
-                    const positions = oldIndex - newIndex;
-                    messages.push(`↑ Category "${name}" moved up ${positions} position${positions > 1 ? 's' : ''}`);
+                    const count = oldIndex - newIndex;
+                    messages.push(`↑ ${t('category.movedUp', { name, count })}`);
                 } else {
-                    const positions = newIndex - oldIndex;
-                    messages.push(`↓ Category "${name}" moved down ${positions} position${positions > 1 ? 's' : ''}`);
+                    const count = newIndex - oldIndex;
+                    messages.push(`↓ ${t('category.movedDown', { name, count })}`);
                 }
             }
         }
@@ -226,7 +214,7 @@ class SyncManager {
         for (const [name, newCat] of newNameToCategory) {
             const oldCat = oldNameToCategory.get(name);
             if (oldCat && oldCat.color !== newCat.color) {
-                messages.push(`🎨 Category "${name}" changed color`);
+                messages.push(`🎨 ${t('category.colorChanged', { name })}`);
             }
         }
         
