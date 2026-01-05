@@ -61,6 +61,16 @@ export class ListSync {
                         timestamp: Date.now()
                     });
                 }
+                // Broadcast categories updates to all other sessions for this list
+                if (data.type === 'categories_update') {
+                    console.log('[DURABLE] Broadcasting categories update');
+                    this.broadcast(session, {
+                        type: 'categories_update',
+                        listId: data.listId,
+                        categories: data.categories,
+                        timestamp: Date.now()
+                    });
+                }
             }
             catch (error) {
                 console.error('[DURABLE] Error handling message:', error);

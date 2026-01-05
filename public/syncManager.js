@@ -1,5 +1,5 @@
 // Client-side WebSocket sync manager
-import { list } from './store';
+import { list, categories } from './store';
 import { get } from 'svelte/store';
 class SyncManager {
     ws = null;
@@ -73,6 +73,20 @@ class SyncManager {
                     console.log('[SYNC] Remote update flag cleared');
                 }, 100);
                 break;
+            case 'categories_update':
+                console.log('[SYNC] Applying remote categories update');
+                // Set flag to prevent re-broadcasting this update
+                this.isApplyingRemoteUpdate = true;
+                // Deep clone to ensure Svelte detects all changes
+                const newCategories = data.categories.map((cat) => ({ ...cat }));
+                categories.set(newCategories);
+                console.log('[SYNC] Categories store updated with', newCategories.length, 'categories');
+                // Reset flag after longer delay to ensure all reactive updates complete
+                setTimeout(() => {
+                    this.isApplyingRemoteUpdate = false;
+                    console.log('[SYNC] Remote categories update flag cleared');
+                }, 100);
+                break;
         }
     }
     sendListUpdate(listData) {
@@ -86,6 +100,19 @@ class SyncManager {
         }
         else {
             console.log('[SYNC] Cannot send update - WebSocket not connected. State:', this.ws?.readyState);
+        }
+    }
+    sendCategoryUpdate(categoryData) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            console.log('[SYNC] Sending categories update:', categoryData);
+            this.ws.send(JSON.stringify({
+                type: 'categories_update',
+                listId: this.listId,
+                categories: categoryData
+            }));
+        }
+        else {
+            console.log('[SYNC] Cannot send categories update - WebSocket not connected. State:', this.ws?.readyState);
         }
     }
     scheduleReconnect() {
@@ -138,5 +165,24 @@ list.subscribe((value) => {
         // Deep clone to avoid reference issues
         lastListValue = JSON.parse(JSON.stringify(value));
         syncManager.sendListUpdate(value);
+    }
+});
+// Subscribe to categories changes and broadcast them
+let lastCategoriesValue = null;
+categories.subscribe((value) => {
+    console.log('[SYNC] Categories changed, connected:', syncManager.isConnected(), 'applying remote:', syncManager['isApplyingRemoteUpdate'], 'value:', value);
+    // Don't broadcast if we're applying a remote update (would cause feedback loop)
+    if (syncManager['isApplyingRemoteUpdate']) {
+        console.log('[SYNC] Skipping categories broadcast - this is a remote update');
+        // Deep clone to avoid reference issues
+        lastCategoriesValue = JSON.parse(JSON.stringify(value));
+        return;
+    }
+    // Only send if the categories actually changed and we're connected
+    if (syncManager.isConnected() && JSON.stringify(value) !== JSON.stringify(lastCategoriesValue)) {
+        console.log('[SYNC] Broadcasting local categories change');
+        // Deep clone to avoid reference issues
+        lastCategoriesValue = JSON.parse(JSON.stringify(value));
+        syncManager.sendCategoryUpdate(value);
     }
 });
