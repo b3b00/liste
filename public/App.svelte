@@ -4,6 +4,7 @@
     import ShopList from "./List.svelte";
     import Import from "./Import.svelte";
     import ListSettings from "./ListSettings.svelte";
+    import Notifications from "./Notifications.svelte";
     import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     import Button, {Label} from '@smui/button';  
@@ -160,6 +161,7 @@
       </Row>
     </TopAppBar>
     <Router {routes}/>
+    <Notifications />
   
   
   

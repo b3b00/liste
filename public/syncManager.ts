@@ -2,6 +2,7 @@
 
 import { list, categories } from './store';
 import { get } from 'svelte/store';
+import { notifications } from './notifications';
 
 class SyncManager {
     private ws: WebSocket | null = null;
@@ -72,12 +73,20 @@ class SyncManager {
             
             case 'list_update':
                 console.log('[SYNC] Applying remote list update');
+                // Get current list before update
+                const currentList = get(list);
+                
                 // Set flag to prevent re-broadcasting this update
                 this.isApplyingRemoteUpdate = true;
+                
                 // Deep clone to ensure Svelte detects all changes
                 const newList = data.list.map((item: any) => ({...item}));
                 list.set(newList);
                 console.log('[SYNC] List store updated with', newList.length, 'items');
+                
+                // Detect and notify about changes
+                this.notifyListChanges(currentList, newList);
+                
                 // Reset flag after longer delay to ensure all reactive updates complete
                 setTimeout(() => {
                     this.isApplyingRemoteUpdate = false;
@@ -87,12 +96,20 @@ class SyncManager {
             
             case 'categories_update':
                 console.log('[SYNC] Applying remote categories update');
+                // Get current categories before update
+                const currentCategories = get(categories);
+                
                 // Set flag to prevent re-broadcasting this update
                 this.isApplyingRemoteUpdate = true;
+                
                 // Deep clone to ensure Svelte detects all changes
                 const newCategories = data.categories.map((cat: any) => ({...cat}));
                 categories.set(newCategories);
                 console.log('[SYNC] Categories store updated with', newCategories.length, 'categories');
+                
+                // Detect and notify about changes
+                this.notifyCategoryChanges(currentCategories, newCategories);
+                
                 // Reset flag after longer delay to ensure all reactive updates complete
                 setTimeout(() => {
                     this.isApplyingRemoteUpdate = false;
@@ -100,6 +117,123 @@ class SyncManager {
                 }, 100);
                 break;
         }
+    }
+
+    private notifyListChanges(oldList: any[], newList: any[]) {
+        const oldMap = new Map(oldList.map(item => [item.id, item]));
+        const newMap = new Map(newList.map(item => [item.id, item]));
+        
+        const messages: string[] = [];
+        
+        // Check for added items
+        for (const [id, newItem] of newMap) {
+            if (!oldMap.has(id)) {
+                messages.push(`📥 Item "${newItem.label}" added`);
+            }
+        }
+        
+        // Check for removed items
+        for (const [id, oldItem] of oldMap) {
+            if (!newMap.has(id)) {
+                messages.push(`🗑️ Item "${oldItem.label}" removed`);
+            }
+        }
+        
+        // Check for modified items - detect specific changes
+        for (const [id, newItem] of newMap) {
+            const oldItem = oldMap.get(id);
+            if (oldItem) {
+                const changes: string[] = [];
+                
+                // Check if label changed (renamed)
+                if (oldItem.label !== newItem.label) {
+                    messages.push(`✏️ Item renamed: "${oldItem.label}" → "${newItem.label}"`);
+                    continue; // Skip other checks for renamed items
+                }
+                
+                // Check if category changed
+                if (oldItem.category !== newItem.category) {
+                    changes.push(`category: ${oldItem.category} → ${newItem.category}`);
+                }
+                
+                // Check if done status changed
+                if (oldItem.done !== newItem.done) {
+                    if (newItem.done) {
+                        changes.push('marked as done');
+                    } else {
+                        changes.push('marked as not done');
+                    }
+                }
+                
+                // Check if color changed
+                if (oldItem.color !== newItem.color) {
+                    changes.push('color changed');
+                }
+                
+                // Show notification for this item if there are changes
+                if (changes.length > 0) {
+                    messages.push(`✏️ Item "${newItem.label}": ${changes.join(', ')}`);
+                }
+            }
+        }
+        
+        // Show notifications
+        messages.forEach(msg => {
+            notifications.show(msg, 'info', 5000);
+        });
+    }
+
+    private notifyCategoryChanges(oldCategories: any[], newCategories: any[]) {
+        const messages: string[] = [];
+        
+        // Build maps of category names to their positions
+        const oldNameToIndex = new Map(oldCategories.map((c, i) => [c.label, i]));
+        const newNameToIndex = new Map(newCategories.map((c, i) => [c.label, i]));
+        
+        // Build maps of category names to their full objects
+        const oldNameToCategory = new Map(oldCategories.map(c => [c.label, c]));
+        const newNameToCategory = new Map(newCategories.map(c => [c.label, c]));
+        
+        // Check for added categories (names that exist in new but not in old)
+        for (const [name, newIndex] of newNameToIndex) {
+            if (!oldNameToIndex.has(name)) {
+                messages.push(`📂 Category "${name}" added`);
+            }
+        }
+        
+        // Check for removed categories (names that exist in old but not in new)
+        for (const [name, oldIndex] of oldNameToIndex) {
+            if (!newNameToIndex.has(name)) {
+                messages.push(`🗑️ Category "${name}" removed`);
+            }
+        }
+        
+        // Check for moved categories (same name, different position)
+        for (const [name, newIndex] of newNameToIndex) {
+            const oldIndex = oldNameToIndex.get(name);
+            if (oldIndex !== undefined && oldIndex !== newIndex) {
+                if (newIndex < oldIndex) {
+                    const positions = oldIndex - newIndex;
+                    messages.push(`↑ Category "${name}" moved up ${positions} position${positions > 1 ? 's' : ''}`);
+                } else {
+                    const positions = newIndex - oldIndex;
+                    messages.push(`↓ Category "${name}" moved down ${positions} position${positions > 1 ? 's' : ''}`);
+                }
+            }
+        }
+        
+        // Check for color changes (same name, same or different position, but different color)
+        for (const [name, newCat] of newNameToCategory) {
+            const oldCat = oldNameToCategory.get(name);
+            if (oldCat && oldCat.color !== newCat.color) {
+                messages.push(`🎨 Category "${name}" changed color`);
+            }
+        }
+        
+        // Show notifications
+        messages.forEach(msg => {
+            notifications.show(msg, 'info', 5000);
+        });
     }
 
     sendListUpdate(listData: any) {
