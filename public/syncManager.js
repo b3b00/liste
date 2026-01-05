@@ -128,13 +128,15 @@ list.subscribe((value) => {
     // Don't broadcast if we're applying a remote update (would cause feedback loop)
     if (syncManager['isApplyingRemoteUpdate']) {
         console.log('[SYNC] Skipping broadcast - this is a remote update');
-        lastListValue = value;
+        // Deep clone to avoid reference issues
+        lastListValue = JSON.parse(JSON.stringify(value));
         return;
     }
     // Only send if the list actually changed and we're connected
     if (syncManager.isConnected() && JSON.stringify(value) !== JSON.stringify(lastListValue)) {
         console.log('[SYNC] Broadcasting local list change');
-        lastListValue = value;
+        // Deep clone to avoid reference issues
+        lastListValue = JSON.parse(JSON.stringify(value));
         syncManager.sendListUpdate(value);
     }
 });
