@@ -95,6 +95,7 @@ router.get<IRequest, CF>('/auth/login', async (request: IRequest, env: Env) => {
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('scope', 'openid email profile');
     authUrl.searchParams.set('access_type', 'offline');
+    authUrl.searchParams.set('prompt', 'select_account'); // Force account selection
     
     return Response.redirect(authUrl.toString(), 302);
 });
@@ -159,14 +160,48 @@ router.get<IRequest, CF>('/auth/logout', async (request: IRequest, env: Env) => 
         <head><title>Logged Out</title></head>
         <body>
             <script>
-                localStorage.removeItem('google_id_token');
-                localStorage.removeItem('user_id');
-                localStorage.removeItem('user_email');
-                localStorage.removeItem('user_name');
-                localStorage.removeItem('user_picture');
-                window.location.href = '/';
+                async function performLogout() {
+                    // Get the token before clearing
+                    const token = localStorage.getItem('google_id_token');
+                    
+                    // Revoke the Google token first
+                    if (token) {
+                        try {
+                            await fetch('https://oauth2.googleapis.com/revoke?token=' + token, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                            });
+                        } catch (err) {
+                            console.log('Token revocation error:', err);
+                        }
+                    }
+                    
+                    // Only clear auth-related data, keep list and categories
+                    localStorage.removeItem('google_id_token');
+                    localStorage.removeItem('user_id');
+                    localStorage.removeItem('user_email');
+                    localStorage.removeItem('user_name');
+                    localStorage.removeItem('user_picture');
+                    
+                    // Verify it's cleared
+                    console.log('Token after clear:', localStorage.getItem('google_id_token'));
+                    console.log('List data preserved:', !!localStorage.getItem('list'));
+                    
+                    // Unregister service worker
+                    if (navigator.serviceWorker) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for(let registration of registrations) {
+                            await registration.unregister();
+                        }
+                    }
+                    
+                    // Show logged out message
+                    document.body.innerHTML = '<div style="text-align:center;margin-top:50px;"><h2>Logged out successfully</h2><p><a href="/auth/login">Click here to login again</a></p></div>';
+                }
+                
+                performLogout();
             </script>
-            <p>Logged out successfully! Redirecting...</p>
+            <p style="text-align:center;margin-top:50px;">Logging out...</p>
         </body>
         </html>
     `;

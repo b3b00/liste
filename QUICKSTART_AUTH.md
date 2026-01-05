@@ -1,9 +1,9 @@
 # Quick Start: Google OAuth2 Multi-Tenant
 
 ## Prerequisites Checklist
-- [ ] Google account
-- [ ] Node.js and npm installed
-- [ ] 5-10 minutes of setup time
+- [X] Google account
+- [X] Node.js and npm installed
+- [X] 5-10 minutes of setup time
 
 ## Get Google OAuth2 Credentials (First Time Setup) DONE
 

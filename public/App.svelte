@@ -15,10 +15,12 @@
     import Pen from "svelte-material-icons/Pen.svelte";
     import Inbox from "svelte-material-icons/Inbox.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
+    import Logout from "svelte-material-icons/Logout.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList, categories } from "./store";
     import {compressAndEncodeBase64, decodeBase64AndDecompress} from './zip';
+    import { isAuthenticated, logout } from './client';
     
 
     
@@ -133,6 +135,13 @@
             <Cog></Cog>
           </IconButton>
         </Section>
+        {#if isAuthenticated()}
+          <Section align="end" toolbar>
+            <IconButton on:click={() => logout()} toggle>
+              <Logout></Logout>
+            </IconButton>
+          </Section>
+        {/if}
         {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}
           <Section align="end" toolbar>
             <IconButton on:click={() => push('/list/In')} toggle>
