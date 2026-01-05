@@ -27,7 +27,7 @@ function extractSha1(buffer) {
 }
 
 function setVersion(sha1,workerTemplatePath, workerPath, versionFilePath) {
-    const versionData = {version:sha1};
+    const versionData = {version:sha1.substring(0, 7), hash:sha1};
     fs.writeFileSync(versionFilePath,JSON.stringify(versionData));
     let workerRawContent = fs.readFileSync(workerTemplatePath);
     let workerContent = ab2str(workerRawContent,false);
@@ -36,14 +36,14 @@ function setVersion(sha1,workerTemplatePath, workerPath, versionFilePath) {
 }
 
 try {
-    var git = execSync(`git rev-parse --short HEAD`);
+    var git = execSync(`git rev-parse HEAD`);
     console.log(`git suceeded`);
     if (debug) {
       console.log('git raw output :');
       console.log(git);
     }
     let sha1 = extractSha1(git).replace('\n','').replace('\r','');
-    console.log(`current has is ${sha1}`);
+    console.log(`current hash is ${sha1}`);
     setVersion(sha1,'./public/worker_template.js','./public/worker.js','public/version.json');
   } catch (error) {
     console.log(error);

@@ -8,13 +8,14 @@
     "target": "esnext",
     "module": "es6",
     "moduleResolution": "node",
-   // "suppressImplicitAnyIndexErrors": true,
+  //  "suppressImplicitAnyIndexErrors": true,
    // workaround for https://github.com/vuejs/tsconfig/issues/6
     "preserveValueImports": false,
     "importsNotUsedAsValues": "remove",
     "verbatimModuleSyntax": true,
     // end workaround
-    "ignoreDeprecations": "5.0"    
+    "ignoreDeprecations": "5.0",
+    "types": ["./worker-configuration.d.ts"]
   },
   "exclude": ["./node_modules"],
   "include": ["./public/**/*"]

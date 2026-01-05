@@ -6,14 +6,17 @@
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
-    import {categories, list, itemsHistory} from './store';
+    import {categories, list, itemsHistory, settings} from './store';
     import {type Category} from './model';
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import {saveList} from './client';
+
     
     categories.useLocalStorage();
     list.useLocalStorage();
     itemsHistory.useLocalStorage();
+    settings.useLocalStorage();
 
     let open : boolean = false;
 
@@ -26,7 +29,17 @@
     onMount(() => {
         })
 
-    function closeHandler(e: CustomEvent<{ action: string }>) {
+
+    async function save() {
+        if ($settings.autoSave) {
+            await saveList($settings.id, {
+                categories: $categories,
+                list: $list
+            });
+        }
+    }
+
+    async function closeHandler(e: CustomEvent<{ action: string }>) {
         console.log(e);
         if (e.detail.action === 'OK') {
             if (editionMode) {
@@ -91,7 +104,10 @@
                     }
                     return x;
                 })
+
                 $categories = categos;
+                await save();
+
                 oldCategoryColor = "#000000";
                 oldCategoryLabel = "";
                 categoryColor = "#000000";
@@ -114,6 +130,7 @@
             let categos = $categories;
             categos = categos.filter(x => x.label !== oldCategoryLabel);
             $categories = categos;
+            save();
             categoryColor = "#000000";
             categoryLabel = "";
         }
@@ -141,21 +158,23 @@
         open = true;
     }
 
-    function up(index:number, category:Category) {
+    async function up(index:number, category:Category) {
         let items = $categories;
         let prev = items[index-1];
         items[index-1] = category;
         items[index] = prev;
         $categories = items;
+        await save();
 
     }
 
-    function down(index:number, category:Category) {
+    async function down(index:number, category:Category) {
         let items = $categories;
         let next = items[index+1];
         items[index+1] = category;
         items[index] = next;
         $categories = items;
+        await save();
     }
 
     </script>

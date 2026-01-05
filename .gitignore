@@ -24,3 +24,8 @@ public/version.json
 public/worker.js
 public/model.js
 public/colors.js
+public/RouterTypes.js
+public/client.js
+public/logic.js
+public/zip.js
+public/thumbprint.js
