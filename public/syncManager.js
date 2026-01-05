@@ -154,57 +154,43 @@ class SyncManager {
     }
     notifyCategoryChanges(oldCategories, newCategories) {
         const messages = [];
-        // Check for added categories (new categories at the end)
-        if (newCategories.length > oldCategories.length) {
-            for (let i = oldCategories.length; i < newCategories.length; i++) {
-                messages.push(`📂 Category "${newCategories[i].label}" added`);
+        // Build maps of category names to their positions
+        const oldNameToIndex = new Map(oldCategories.map((c, i) => [c.label, i]));
+        const newNameToIndex = new Map(newCategories.map((c, i) => [c.label, i]));
+        // Build maps of category names to their full objects
+        const oldNameToCategory = new Map(oldCategories.map(c => [c.label, c]));
+        const newNameToCategory = new Map(newCategories.map(c => [c.label, c]));
+        // Check for added categories (names that exist in new but not in old)
+        for (const [name, newIndex] of newNameToIndex) {
+            if (!oldNameToIndex.has(name)) {
+                messages.push(`📂 Category "${name}" added`);
             }
         }
-        // Check for removed categories (fewer categories than before)
-        if (newCategories.length < oldCategories.length) {
-            for (let i = newCategories.length; i < oldCategories.length; i++) {
-                messages.push(`🗑️ Category "${oldCategories[i].label}" removed`);
+        // Check for removed categories (names that exist in old but not in new)
+        for (const [name, oldIndex] of oldNameToIndex) {
+            if (!newNameToIndex.has(name)) {
+                messages.push(`🗑️ Category "${name}" removed`);
             }
         }
-        // Check for modified categories at same positions
-        const minLength = Math.min(oldCategories.length, newCategories.length);
-        for (let i = 0; i < minLength; i++) {
-            const oldCat = oldCategories[i];
-            const newCat = newCategories[i];
-            // Check if label changed (renamed)
-            if (oldCat.label !== newCat.label) {
-                messages.push(`✏️ Category renamed: "${oldCat.label}" → "${newCat.label}"`);
-            }
-            else {
-                // Check if color changed (only if label is the same)
-                if (oldCat.color !== newCat.color) {
-                    messages.push(`🎨 Category "${newCat.label}" changed color`);
+        // Check for moved categories (same name, different position)
+        for (const [name, newIndex] of newNameToIndex) {
+            const oldIndex = oldNameToIndex.get(name);
+            if (oldIndex !== undefined && oldIndex !== newIndex) {
+                if (newIndex < oldIndex) {
+                    const positions = oldIndex - newIndex;
+                    messages.push(`↑ Category "${name}" moved up ${positions} position${positions > 1 ? 's' : ''}`);
+                }
+                else {
+                    const positions = newIndex - oldIndex;
+                    messages.push(`↓ Category "${name}" moved down ${positions} position${positions > 1 ? 's' : ''}`);
                 }
             }
         }
-        // Check for reordering (if same length, no adds/removes/renames, but different order)
-        if (messages.length === 0 && oldCategories.length === newCategories.length) {
-            const oldOrder = oldCategories.map(c => c.label).join(',');
-            const newOrder = newCategories.map(c => c.label).join(',');
-            if (oldOrder !== newOrder) {
-                // Find which category moved and in which direction
-                const oldLabelToIndex = new Map(oldCategories.map((c, i) => [c.label, i]));
-                const newLabelToIndex = new Map(newCategories.map((c, i) => [c.label, i]));
-                for (const cat of newCategories) {
-                    const oldIndex = oldLabelToIndex.get(cat.label);
-                    const newIndex = newLabelToIndex.get(cat.label);
-                    if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
-                        if (newIndex < oldIndex) {
-                            const positions = oldIndex - newIndex;
-                            messages.push(`↑ Category "${cat.label}" moved up ${positions} position${positions > 1 ? 's' : ''}`);
-                        }
-                        else {
-                            const positions = newIndex - oldIndex;
-                            messages.push(`↓ Category "${cat.label}" moved down ${positions} position${positions > 1 ? 's' : ''}`);
-                        }
-                        break; // Only report the first moved category to avoid multiple messages
-                    }
-                }
+        // Check for color changes (same name, same or different position, but different color)
+        for (const [name, newCat] of newNameToCategory) {
+            const oldCat = oldNameToCategory.get(name);
+            if (oldCat && oldCat.color !== newCat.color) {
+                messages.push(`🎨 Category "${name}" changed color`);
             }
         }
         // Show notifications
