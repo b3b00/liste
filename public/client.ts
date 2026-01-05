@@ -1,5 +1,35 @@
 import { type SharedList, type VersionInfo } from "./model"
 
+/**
+ * Check if user is authenticated
+ */
+export function isAuthenticated(): boolean {
+    return localStorage.getItem('google_id_token') !== null;
+}
+
+/**
+ * Get current user info from localStorage
+ */
+export function getCurrentUser(): { id: string; email: string; name: string; picture: string } | null {
+    const id = localStorage.getItem('user_id');
+    const email = localStorage.getItem('user_email');
+    const name = localStorage.getItem('user_name');
+    const picture = localStorage.getItem('user_picture');
+    
+    if (id && email && name && picture) {
+        return { id, email, name, picture };
+    }
+    
+    return null;
+}
+
+/**
+ * Logout
+ */
+export function logout(): void {
+    window.location.href = '/auth/logout';
+}
+
 export const getList = async (id: string): Promise<SharedList | undefined> => {
     console.log(`Fetching list with id ${id}`);
     id = await hashString(id);

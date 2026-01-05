@@ -83,6 +83,9 @@
 
         $:{
           mode = (params.mode && params.mode == "In"? ListMode.Inbox : $listMode) ?? ListMode.Edit;
+            $list; // Explicitly depend on $list to trigger reactivity
+            $categories; // Explicitly depend on $categories to trigger reactivity
+            $sharedList; // Explicitly depend on $sharedList to trigger reactivity
             updateItemsByCategory();
             updateSuggestions();
         }

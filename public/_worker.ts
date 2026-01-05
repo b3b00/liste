@@ -5,6 +5,7 @@ import { type KVNamespace, type ExecutionContext, type ScheduledController } fro
 import { get } from 'svelte/store'
 import { getList, saveList } from './logic'
 import type { SharedList } from './model'
+export { ListSync } from './ListSync'
 
 
 
@@ -143,6 +144,33 @@ router.put<IRequest, CF>('/list/:id',  async (request:IRequest, env:Env) => {
 
 
 
+
+// WebSocket endpoint for real-time list sync
+router.get<IRequest, CF>('/sync', async (request: IRequest, env: Env) => {
+    console.log('[WORKER] WebSocket /sync endpoint hit');
+    const url = new URL(request.url);
+    const listId = url.searchParams.get('listId') || 'default';
+    
+    console.log('[WORKER] /sync - listId:', listId);
+
+    try {
+        // Get Durable Object for this list
+        const id = env.LIST_SYNC.idFromName(listId);
+        console.log('[WORKER] Got Durable Object ID:', id.toString());
+        
+        const stub = env.LIST_SYNC.get(id);
+        console.log('[WORKER] Got Durable Object stub');
+        
+        // Forward the WebSocket request to the Durable Object
+        const response = await stub.fetch(request);
+        console.log('[WORKER] Got response from Durable Object, status:', response.status);
+        
+        return response;
+    } catch (error) {
+        console.error('[WORKER] Error in /sync:', error);
+        return new Response('Error: ' + error, { status: 500 });
+    }
+});
 
 router.all('*', (request, env) => {
     console.log('assets handler')

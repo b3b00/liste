@@ -15,10 +15,13 @@
     import Pen from "svelte-material-icons/Pen.svelte";
     import Inbox from "svelte-material-icons/Inbox.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
-    import { onMount } from 'svelte';
+    import Logout from "svelte-material-icons/Logout.svelte";
+    import { onMount, onDestroy } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList, categories } from "./store";
     import {compressAndEncodeBase64, decodeBase64AndDecompress} from './zip';
+    import { isAuthenticated, getCurrentUser, logout } from './client';
+    import { syncManager } from './syncManager';
     
 
     
@@ -52,6 +55,15 @@
           });
           $list = items;
         }
+
+        // Initialize WebSocket sync using the list ID from settings
+        // No authentication needed - sync is based on list ID only
+        console.log('[APP] Initializing sync');
+        syncManager.connect('default');
+      });
+
+      onDestroy(() => {
+        syncManager.disconnect();
       });
 
 
