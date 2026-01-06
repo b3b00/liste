@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, settings, categories, versionInfo } from './store';
+    import { list, settings, categories, versionInfo, enableNotifications } from './store';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
@@ -113,6 +113,15 @@
          console.log(`Settings updated: ${JSON.stringify($settings)}`);
     }}/>
       Sauvegarde automatique.
+  </FormField>
+
+  <FormField align="end">
+    <Switch bind:checked={$enableNotifications} 
+    on:SMUISwitch:change={() => {
+        console.log(`Switch ON:SMUI:changed:  => ${$enableNotifications}`);        enableNotifications;
+         console.log(`Settings updated: ${JSON.stringify($settings)}`);
+    }}/>
+      Activer les notifications.
   </FormField>
  
 <br>

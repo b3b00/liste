@@ -1,5 +1,6 @@
 <script lang="ts">
     import { notifications } from './notifications';
+    import { enableNotifications } from './store';
     
     let notificationList: any[] = [];
     
@@ -12,6 +13,7 @@
     }
 </script>
 
+{#if $enableNotifications}
 <div class="notification-container">
     {#each notificationList as notification (notification.id)}
         <div class="notification notification-{notification.type}" on:click={() => dismiss(notification.id)}>
@@ -20,6 +22,7 @@
         </div>
     {/each}
 </div>
+{/if}
 
 <style>
     .notification-container {
