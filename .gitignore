@@ -29,3 +29,5 @@ public/client.js
 public/logic.js
 public/zip.js
 public/thumbprint.js
+public/notifications.js
+public/syncManager.js

@@ -7,6 +7,7 @@
     "scripts": {
         "format": "prettier --write '**/*.{js,css,json,md}'",
         "dev": "wrangler pages dev ./public/ --persist-to=./.wrangler/state/d1 --d1=D1_lists --port=8888",
+        "dev:all": "concurrently -n worker,pages -c blue,green \"npx wrangler dev --config=wrangler.worker.toml --port=8787\" \"npm run dev\"",
         "updateversion": "node setVersion.js",
         "build:front": "npm run updateversion && rollup -c",
         "build:auto": "npm run updateversion && rollup -c -w",
@@ -16,6 +17,7 @@
     "author": "{{ authors }}",
     "license": "ISC",
     "devDependencies": {
+        "concurrently": "^8.2.0",
         "@cloudflare/workers-types": "^4.20250722.0",
         "@smui/icon-button": "^6.0.0",
         "@smui/paper": "^6.0.0",
