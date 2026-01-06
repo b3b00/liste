@@ -1,7 +1,10 @@
 // TypeScript wrapper to publish the compiled worker as `listes-worker`
-// It re-exports the default fetch handler and Durable Object class from public/_worker.js
+// Re-export the default fetch handler and the Durable Object class.
 
-import worker, { ListSync } from './public/_worker.js';
+import worker from './public/_worker.ts';
+import { ListSync } from './public/ListSync.ts';
+
+console.log('[WRAPPER] listes-worker loaded. ListSync exported:', typeof ListSync !== 'undefined');
 
 export { ListSync };
 export default (worker as any);

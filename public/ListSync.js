@@ -5,6 +5,7 @@ export class ListSync {
     constructor(state, env) {
         this.env = env;
         this.sessions = new Set();
+        console.log('[DURABLE] ListSync constructor called for state:', state?.id?.toString ? state.id.toString() : '(no id)');
     }
     async fetch(request) {
         const url = new URL(request.url);
@@ -32,6 +33,7 @@ export class ListSync {
             }
         }
         console.error('[DURABLE] Not a WebSocket upgrade request');
+        console.log('[DURABLE] Request headers:', Array.from(request.headers.entries()));
         return new Response('Expected WebSocket upgrade', { status: 400 });
     }
     async handleSession(webSocket, listId) {
@@ -48,7 +50,19 @@ export class ListSync {
         webSocket.addEventListener('message', (event) => {
             console.log('[DURABLE] Received message:', event.data);
             try {
-                const data = JSON.parse(event.data);
+                const raw = event.data;
+                if (!raw || raw.trim() === '') {
+                    console.warn('[DURABLE] Ignoring empty WebSocket message');
+                    return;
+                }
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                }
+                catch (err) {
+                    console.error('[DURABLE] Invalid JSON in WebSocket message', err);
+                    return;
+                }
                 // Broadcast list updates to all other sessions for this list
                 if (data.type === 'list_update') {
                     console.log('[DURABLE] Broadcasting list update');

@@ -109,11 +109,20 @@ router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:
         const id = request.params.id;
         //const id = "test";
         const body = await streamToText(request.body);
-        console.log("POST",body);
-        const list = JSON.parse(body) as SharedList
-        console.log(`POST /list/${id}`,list);
+        console.log("POST", body);
+        if (!body || body.trim() === '') {
+            return await renderBadPRequestJson(env, request, errorResult([`empty request body`], null));
+        }
+        let list: SharedList;
+        try {
+            list = JSON.parse(body) as SharedList;
+        } catch (e: any) {
+            console.error('POST /list/:id JSON parse error', e);
+            return await renderBadPRequestJson(env, request, errorResult([`invalid JSON body`, e?.message || String(e)], null));
+        }
+        console.log(`POST /list/${id}`, list);
         await saveList(env, id, list);
-        return renderOkJson(env,request,{});
+        return renderOkJson(env, request, {});
 
     } catch (e :any) {
         return await renderInternalServorErrorJson(env,request,
@@ -130,11 +139,20 @@ router.put<IRequest, CF>('/list/:id',  async (request:IRequest, env:Env) => {
         //const id = request.params.id;
         const id = "test";
         const body = await streamToText(request.body);
-        console.log("PUT",body);
-        const list = JSON.parse(body) as SharedList
-        console.log('PUT /list/:id',list);
+        console.log("PUT", body);
+        if (!body || body.trim() === '') {
+            return await renderBadPRequestJson(env, request, errorResult([`empty request body`], null));
+        }
+        let list: SharedList;
+        try {
+            list = JSON.parse(body) as SharedList;
+        } catch (e: any) {
+            console.error('PUT /list/:id JSON parse error', e);
+            return await renderBadPRequestJson(env, request, errorResult([`invalid JSON body`, e?.message || String(e)], null));
+        }
+        console.log('PUT /list/:id', list);
         await saveList(env, id, list);
-        return renderOkJson(env,request,{});
+        return renderOkJson(env, request, {});
 
     } catch (e :any) {
         return await renderInternalServorErrorJson(env,request,
@@ -164,7 +182,15 @@ router.get<IRequest, CF>('/sync', async (request: IRequest, env: Env) => {
         // Forward the WebSocket request to the Durable Object
         const response = await stub.fetch(request);
         console.log('[WORKER] Got response from Durable Object, status:', response.status);
-        
+        try {
+            const cloned = response.clone();
+            const respText = await cloned.text();
+            console.log('[WORKER] Durable Object response body:', respText);
+            console.log('[WORKER] Durable Object response headers:', Array.from(response.headers.entries()));
+        } catch (e) {
+            console.warn('[WORKER] Could not read Durable Object response body', e);
+        }
+
         return response;
     } catch (error) {
         console.error('[WORKER] Error in /sync:', error);

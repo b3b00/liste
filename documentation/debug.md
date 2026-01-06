@@ -119,3 +119,20 @@ If you'd like, I can open both dev processes here and stream their logs to repro
   - Use other color names (`black,red,green,yellow,blue,magenta,cyan,white,gray`) or remove `-c` to disable colors.
   - To change names, edit the `-n` list in the script.
   - On some shells (or CI) colors may not render; remove `-c` or use `--raw` to get unprefixed output.
+
+12) Pages dev helper: temporary `wrangler.toml` swap
+
+- Problem: `wrangler pages dev` does not accept a `--config` flag, so you cannot directly tell it to use `wrangler.dev.toml`. When the default `wrangler.toml` points Durable Object bindings to an external worker (`script_name`), Pages will attempt to proxy to that external `wrangler dev` session and return 503 when it's not available.
+
+- Workaround: this repo includes a small helper script that temporarily copies `wrangler.dev.toml` to `wrangler.toml`, runs `wrangler pages dev`, and restores the original file when the process exits. This allows Pages dev to pick up the local DO binding and migrations.
+
+- Usage:
+
+```bash
+npm run dev:pages
+```
+
+- Notes:
+  - The helper is `scripts/dev-pages.cjs` and is safe for local development. It will back up any existing `wrangler.toml` to `wrangler.toml.bak` and restore it when you exit the dev server.
+  - If you have uncommitted edits in `wrangler.toml`, either stash/commit them before using the helper or edit the helper to create a timestamped backup.
+

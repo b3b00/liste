@@ -15,9 +15,13 @@
     categories.useLocalStorage();
     versionInfo.useLocalStorage();
 
+     import type { VersionInfo } from "./model";
+
+
     let id = '';
 
     let autosave : boolean = false;
+    let notificationsEnabled: boolean = true;
 
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
@@ -110,6 +114,7 @@
     }}/>
       Sauvegarde automatique.
   </FormField>
+ 
 <br>
      <Textfield bind:value={id} label="Identifiant" outlined>
         <HelperText slot="helper">identifiant de la liste</HelperText>
