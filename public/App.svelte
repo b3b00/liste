@@ -19,7 +19,7 @@
     import Logout from "svelte-material-icons/Logout.svelte";
     import { onMount, onDestroy } from 'svelte';
     import { ListMode } from "./model"
-    import { listMode, list, sharedList, categories } from "./store";
+    import { listMode, list, sharedList, categories, settings } from "./store";
     import {compressAndEncodeBase64, decodeBase64AndDecompress} from './zip';
     import { isAuthenticated, getCurrentUser, logout } from './client';
     import { syncManager } from './syncManager';
@@ -58,9 +58,9 @@
         }
 
         // Initialize WebSocket sync using the list ID from settings
-        // No authentication needed - sync is based on list ID only
-        console.log('[APP] Initializing sync');
-        syncManager.connect('default');
+        // Reconnection is handled explicitly in ListSettings.svelte when user changes list
+        console.log('[APP] Initializing sync with listId:', $settings.id || 'default');
+        syncManager.connect($settings.id || 'default');
       });
 
       onDestroy(() => {

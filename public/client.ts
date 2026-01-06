@@ -32,9 +32,7 @@ export function logout(): void {
 
 export const getList = async (id: string): Promise<SharedList | undefined> => {
     console.log(`Fetching list with id ${id}`);
-    id = await hashString(id);
-    console.log(`fetching - Hashed id: ${id}`);
-    let url = `list/${id}`;
+    let url = `list/${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'GET' });
     if (response.ok) {
         const data = await response.json();
@@ -62,9 +60,7 @@ export async function hashString(message : string): Promise<string> {
 
 export const saveList = async (id: string, list: SharedList): Promise<boolean> => {
     console.log(`Saving list with id ${id}`, list);
-    id = await hashString(id);
-    console.log(`saving - Hashed id: ${id}`);
-    let url = `list/${id}`;
+    let url = `list/${encodeURIComponent(id)}`;
     const response = await fetch(url, {
         method: 'POST',
         headers: {

@@ -65,6 +65,13 @@ class SyncManager {
 
     private handleMessage(data: any) {
         console.log('[SYNC] Handling message type:', data.type, data);
+        
+        // Ignore messages that don't match our current listId
+        if (data.listId && data.listId !== this.listId) {
+            console.warn('[SYNC] Ignoring message for different listId:', data.listId, 'expected:', this.listId);
+            return;
+        }
+        
         switch (data.type) {
             case 'connected':
                 console.log('[SYNC] Sync connected for listId:', data.listId);

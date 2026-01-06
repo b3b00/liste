@@ -139,18 +139,48 @@
     </Button>
 
     <Button on:click={async () => {
+        // Disconnect from old list channel before switching
+        try {
+            suspendBroadcasts();
+            if (syncManager.isConnected()) {
+                syncManager.disconnect();
+            }
+        } catch (err) {
+            console.warn('[ListSettings] Error disconnecting', err);
+        }
+
         const reloaded = await getList(id);
         if(reloaded) {
+            // List exists - load it
             $settings = {
                 id:id,
                 autoSave: autosave
             };
             $list = reloaded.list;
             $categories = reloaded.categories;
-            //await save();
         }
         else {
-            window.alert(`Impossible de charger la liste ${id}`);
+            // List doesn't exist - clear list but keep categories
+            $settings = {
+                id: id,
+                autoSave: autosave
+            };
+            $list = [];
+            // Persist the empty list with current categories
+            try {
+                await saveList(id, { categories: $categories, list: [] });
+                notifications.show(`Liste ${id} créée (vide)`, 'success', 4000, { always: true, listId: id });
+            } catch (e) {
+                notifications.show(`Erreur lors de la création de la liste ${id}: ${e?.message || e}`, 'error', 6000, { always: true, listId: id });
+            }
+        }
+        
+        // Reconnect to the new list channel
+        try {
+            syncManager.connect(id);
+            resumeBroadcasts();
+        } catch (err) {
+            console.warn('[ListSettings] reconnect failed', err);
         }
     }} variant="raised">
         <Label><Icon class="material-icons">refresh</Icon>Recharger</Label>
