@@ -31,6 +31,7 @@ public/zip.js
 public/thumbprint.js
 public/notifications.js
 public/syncManager.js
-public/listSync.js
+public/ListSync.js
 public/i18n.js
+wrangler.toml.bak
  

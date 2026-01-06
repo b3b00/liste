@@ -32,18 +32,15 @@ export async function saveList(env: Env, id: string, list :SharedList): Promise<
     let l = await getList(env, id);
  console.log('testing if list already exists ? ',l);
     if (l) {
-        console.log(`list ${id} already exists => updating ?`)
-        if (list.categories.length > 0 && list.list.length > 0) {
-            console.log(`updating list for id ${id}`,list);
-            const result:D1Result<SharedList> = await env.D1_lists.prepare(
-            'update shoppingList set content=?1 where id=?2;')
-            .bind(JSON.stringify(list), decodeURI(id))
-            .run();
-            console.log("insert result", result);
+        console.log(`list ${id} already exists => updating`);
+        console.log(`updating list for id ${id}`,list);
+        const result:D1Result<SharedList> = await env.D1_lists.prepare(
+        'update shoppingList set content=?1 where id=?2;')
+        .bind(JSON.stringify(list), decodeURI(id))
+        .run();
+        console.log("update result", result);
 
-            return result.success;
-        }
-        return false;
+        return result.success;
     }
     else {
         console.log(`creating list for id ${id}`,list);

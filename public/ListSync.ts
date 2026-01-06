@@ -1,6 +1,7 @@
 // Durable Object for managing WebSocket connections for list synchronization
 
 import type { DurableObjectState, DurableObjectNamespace } from '@cloudflare/workers-types';
+import { getList, saveList } from './logic';
 
 interface Session {
     webSocket: WebSocket;
@@ -69,7 +70,7 @@ export class ListSync {
         this.sessions.add(session);
         console.log('[DURABLE] Session added, total sessions:', this.sessions.size);
 
-        webSocket.addEventListener('message', (event: any) => {
+        webSocket.addEventListener('message', async (event: any) => {
             console.log('[DURABLE] Received message:', event.data);
             try {
                 const raw = event.data as string;
@@ -88,6 +89,19 @@ export class ListSync {
                 // Broadcast list updates to all other sessions for this list
                 if (data.type === 'list_update') {
                     console.log('[DURABLE] Broadcasting list update');
+                    
+                    // Persist to D1
+                    try {
+                        const currentList = await getList(this.env, data.listId);
+                        await saveList(this.env, data.listId, {
+                            list: data.list,
+                            categories: currentList?.categories || []
+                        });
+                        console.log('[DURABLE] List persisted to D1');
+                    } catch (err) {
+                        console.error('[DURABLE] Error persisting list:', err);
+                    }
+                    
                     this.broadcast(session, {
                         type: 'list_update',
                         listId: data.listId,
@@ -99,6 +113,19 @@ export class ListSync {
                 // Broadcast categories updates to all other sessions for this list
                 if (data.type === 'categories_update') {
                     console.log('[DURABLE] Broadcasting categories update');
+                    
+                    // Persist to D1
+                    try {
+                        const currentList = await getList(this.env, data.listId);
+                        await saveList(this.env, data.listId, {
+                            list: currentList?.list || [],
+                            categories: data.categories
+                        });
+                        console.log('[DURABLE] Categories persisted to D1');
+                    } catch (err) {
+                        console.error('[DURABLE] Error persisting categories:', err);
+                    }
+                    
                     this.broadcast(session, {
                         type: 'categories_update',
                         listId: data.listId,
