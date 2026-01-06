@@ -31,3 +31,6 @@ public/zip.js
 public/thumbprint.js
 public/notifications.js
 public/syncManager.js
+public/listSync.js
+public/i18n.js
+ 

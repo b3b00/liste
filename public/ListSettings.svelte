@@ -2,10 +2,12 @@
 
     import { onMount } from "svelte";
     import { list, settings, categories, versionInfo, enableNotifications } from './store';
+    import { notifications } from './notifications';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import { saveList, getList, getVersion } from "./client"
+    import { syncManager, suspendBroadcasts, resumeBroadcasts } from './syncManager';
     import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
 
@@ -21,7 +23,7 @@
     let id = '';
 
     let autosave : boolean = false;
-    let notificationsEnabled: boolean = true;
+    let notifyEnabled: boolean = false;
 
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
@@ -29,6 +31,7 @@
     onMount(async () => {
         id = $settings.id || '';
         autosave = $settings.autoSave;
+        notifyEnabled = $enableNotifications;
         //version = await getVersion();
         $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
     });
@@ -83,7 +86,7 @@
                 } else {
                     window.alert('Format JSON invalide. Le fichier doit contenir "categories" et "list".');
                 }
-            } catch (error:any) {
+            } catch (error) {
                 window.alert(`Erreur lors de l'import: ${error.message}`);
             }
         };
@@ -116,10 +119,11 @@
   </FormField>
 
   <FormField align="end">
-    <Switch bind:checked={$enableNotifications} 
+    <Switch bind:checked={notifyEnabled} 
     on:SMUISwitch:change={() => {
-        console.log(`Switch ON:SMUI:changed:  => ${$enableNotifications}`);        enableNotifications;
-         console.log(`Settings updated: ${JSON.stringify($settings)}`);
+        console.log(`Switch ON:SMUI:changed:  => ${notifyEnabled}`);
+        $enableNotifications = notifyEnabled;
+        console.log(`Settings updated: ${JSON.stringify($settings)}`);
     }}/>
       Activer les notifications.
   </FormField>
@@ -129,11 +133,29 @@
         <HelperText slot="helper">identifiant de la liste</HelperText>
     </Textfield>
     <Button on:click={async () => {
+        // Disconnect from old list channel before switching
+        try {
+            suspendBroadcasts();
+            if (syncManager.isConnected()) {
+                syncManager.disconnect();
+            }
+        } catch (err) {
+            console.warn('[ListSettings] Error disconnecting', err);
+        }
+
         $settings = {
             id:id,
             autoSave: $settings.autoSave
          };
         await save();
+
+        // Reconnect to the new list channel
+        try {
+            syncManager.connect(id || 'default');
+            resumeBroadcasts();
+        } catch (err) {
+            console.warn('[ListSettings] reconnect failed', err);
+        }
     }} variant="raised">
         <Label><Icon class="material-icons">save</Icon>Enregistrer</Label>
     </Button>

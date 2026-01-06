@@ -11,10 +11,17 @@ class SyncManager {
     private maxReconnectAttempts = 5;
     private isConnecting = false;
     private isApplyingRemoteUpdate = false; // Flag to prevent feedback loop
+    private broadcastsSuspended = false; // Flag to prevent broadcasts during list transitions
 
     connect(listId: string = 'default') {
+        // If already connected to a different listId, disconnect first
+        if (this.ws && this.ws.readyState === WebSocket.OPEN && this.listId !== listId) {
+            console.log('[SYNC] Disconnecting from', this.listId, 'to reconnect to', listId);
+            this.disconnect();
+        }
+        
         if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
-            console.log('[SYNC] Already connecting or connected');
+            console.log('[SYNC] Already connecting or connected to', this.listId);
             return;
         }
 
@@ -301,7 +308,7 @@ class SyncManager {
 
     sendListUpdate(listData: any) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            console.log('[SYNC] Sending list update:', listData);
+            console.log('[SYNC] Sending list update for listId:', this.listId, 'data:', listData);
             this.ws.send(JSON.stringify({
                 type: 'list_update',
                 listId: this.listId,
@@ -314,7 +321,7 @@ class SyncManager {
 
     sendCategoryUpdate(categoryData: any) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            console.log('[SYNC] Sending categories update:', categoryData);
+            console.log('[SYNC] Sending categories update for listId:', this.listId, 'data:', categoryData);
             this.ws.send(JSON.stringify({
                 type: 'categories_update',
                 listId: this.listId,
@@ -362,9 +369,28 @@ class SyncManager {
     isConnected(): boolean {
         return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
     }
+
+    suspendBroadcasts() {
+        console.log('[SYNC] Broadcasts suspended');
+        this.broadcastsSuspended = true;
+    }
+
+    resumeBroadcasts() {
+        console.log('[SYNC] Broadcasts resumed');
+        this.broadcastsSuspended = false;
+    }
 }
 
 export const syncManager = new SyncManager();
+
+// Export convenience functions for suspending/resuming broadcasts
+export function suspendBroadcasts() {
+    syncManager.suspendBroadcasts();
+}
+
+export function resumeBroadcasts() {
+    syncManager.resumeBroadcasts();
+}
 
 // Subscribe to list changes and broadcast them
 let lastListValue: any = null;
@@ -391,11 +417,19 @@ list.subscribe((value) => {
 // Subscribe to categories changes and broadcast them
 let lastCategoriesValue: any = null;
 categories.subscribe((value) => {
-    console.log('[SYNC] Categories changed, connected:', syncManager.isConnected(), 'applying remote:', syncManager['isApplyingRemoteUpdate'], 'value:', value);
+    console.log('[SYNC] Categories changed, connected:', syncManager.isConnected(), 'applying remote:', syncManager['isApplyingRemoteUpdate'], 'suspended:', syncManager['broadcastsSuspended'], 'value:', value);
     
     // Don't broadcast if we're applying a remote update (would cause feedback loop)
     if (syncManager['isApplyingRemoteUpdate']) {
         console.log('[SYNC] Skipping categories broadcast - this is a remote update');
+        // Deep clone to avoid reference issues
+        lastCategoriesValue = JSON.parse(JSON.stringify(value));
+        return;
+    }
+    
+    // Don't broadcast if broadcasts are suspended (during list transitions)
+    if (syncManager['broadcastsSuspended']) {
+        console.log('[SYNC] Skipping categories broadcast - broadcasts are suspended');
         // Deep clone to avoid reference issues
         lastCategoriesValue = JSON.parse(JSON.stringify(value));
         return;
