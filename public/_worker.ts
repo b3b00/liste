@@ -1,0 +1,213 @@
+// NOTE : _worker.js must be place at the root of the output dir == ./public for this app
+
+import { Router, withParams, withContent, error, type IRequest  } from 'itty-router'
+import { type KVNamespace, type ExecutionContext, type ScheduledController } from '@cloudflare/workers-types'
+import { get } from 'svelte/store'
+import { getList, saveList } from './logic'
+import type { SharedList } from './model'
+export { ListSync } from './ListSync'
+
+
+
+// declare what's available in our env
+
+
+type LRequest = {
+    id: string;
+    postQuery:any;
+  } & IRequest
+
+  // create a convenient duple
+  type CF = [env: Env, context: ExecutionContext]
+
+const router = Router()
+
+
+async function streamToText(stream: ReadableStream<Uint8Array> | null): Promise<string> {
+    if (!stream) {
+        return '';
+    }
+    let r = new Response(stream);
+    return await r.text()
+}
+
+const withPostQuery = async (request:IRequest) => {
+    let body = await streamToText(request.body);
+    console.log(body);
+    var params = new URLSearchParams(body);
+    request.postQuery={};
+    params.forEach((value,key,parent) => {
+        request.postQuery[key] = value;
+    })    
+  }
+
+
+export function errorResult(errors:string[],result:any) {
+    return {
+        ok:false,
+        errors:errors,
+        result:result
+    };
+}
+
+export function okResult(result:any) {
+    return {
+        ok:true,
+        result:result
+    };
+}
+
+
+async function renderOkJson(env : Env, request : IRequest, data :any) {
+    let response = await renderJson(env,request,data);
+    return response;
+}
+
+async function renderInternalServorErrorJson(env : Env, request : IRequest, data :any) {
+    return error(500,data);
+}
+
+async function renderBadPRequestJson(env:Env, request:IRequest, data: any) {
+    return error(400,data);
+}
+
+async function notFoundJson(env:Env, request:IRequest, data :any) {
+    return error(404,data);
+}
+
+async function renderJson(env:Env, request:IRequest, data :any) {
+    const payload = JSON.stringify(data);
+    var response = new Response(payload);
+    response.headers.set('Content-Type', 'application/json')
+    return response
+}
+ 
+router.get<IRequest, CF>('/list/:id', async (request:IRequest, env:Env) => {
+    try {
+        console.log('GET /list/:id', request.params.id);
+        const id = request.params.id;
+        const p = await getList(env, id);
+        if (p === undefined) {
+            return await notFoundJson(env, request, errorResult([`list with id ${id} not found`],null));
+        }
+        return await renderOkJson(env, request, p);
+    }
+    catch(e :any) {
+        return await renderInternalServorErrorJson(env,request,
+            errorResult([`error while getting list :>${request.params.id}<`,e.message],null));
+    }
+});
+
+
+// POST a new list
+// path parameters
+//   - id (string) : list id
+// body 
+router.post<IRequest, CF>('/list/:id', withParams, async (request:IRequest, env:Env) => {
+    try {
+        console.log('POST LIST...',request);
+        const id = request.params.id;
+        //const id = "test";
+        const body = await streamToText(request.body);
+        console.log("POST", body);
+        if (!body || body.trim() === '') {
+            return await renderBadPRequestJson(env, request, errorResult([`empty request body`], null));
+        }
+        let list: SharedList;
+        try {
+            list = JSON.parse(body) as SharedList;
+        } catch (e: any) {
+            console.error('POST /list/:id JSON parse error', e);
+            return await renderBadPRequestJson(env, request, errorResult([`invalid JSON body`, e?.message || String(e)], null));
+        }
+        console.log(`POST /list/${id}`, list);
+        await saveList(env, id, list);
+        return renderOkJson(env, request, {});
+
+    } catch (e :any) {
+        return await renderInternalServorErrorJson(env,request,
+            errorResult([`error while saving list :>${request.params.id}<`,e.message],null));
+    }
+})
+
+// PUT a new list
+// path parameters
+//   - id (string) : list id
+// body 
+router.put<IRequest, CF>('/list/:id',  async (request:IRequest, env:Env) => {
+    try {                        
+        //const id = request.params.id;
+        const id = "test";
+        const body = await streamToText(request.body);
+        console.log("PUT", body);
+        if (!body || body.trim() === '') {
+            return await renderBadPRequestJson(env, request, errorResult([`empty request body`], null));
+        }
+        let list: SharedList;
+        try {
+            list = JSON.parse(body) as SharedList;
+        } catch (e: any) {
+            console.error('PUT /list/:id JSON parse error', e);
+            return await renderBadPRequestJson(env, request, errorResult([`invalid JSON body`, e?.message || String(e)], null));
+        }
+        console.log('PUT /list/:id', list);
+        await saveList(env, id, list);
+        return renderOkJson(env, request, {});
+
+    } catch (e :any) {
+        return await renderInternalServorErrorJson(env,request,
+            errorResult([`error while saving list :>${request.postQuery.name}<`,e.message],null));
+    }
+})
+
+
+
+
+// WebSocket endpoint for real-time list sync
+router.get<IRequest, CF>('/sync', async (request: IRequest, env: Env) => {
+    console.log('[WORKER] WebSocket /sync endpoint hit');
+    const url = new URL(request.url);
+    const listId = url.searchParams.get('listId') || 'default';
+    
+    console.log('[WORKER] /sync - listId:', listId);
+
+    try {
+        // Get Durable Object for this list
+        const id = env.LIST_SYNC.idFromName(listId);
+        console.log('[WORKER] Got Durable Object ID:', id.toString());
+        
+        const stub = env.LIST_SYNC.get(id);
+        console.log('[WORKER] Got Durable Object stub');
+        
+        // Forward the WebSocket request to the Durable Object
+        const response = await stub.fetch(request);
+        console.log('[WORKER] Got response from Durable Object, status:', response.status);
+        try {
+            const cloned = response.clone();
+            const respText = await cloned.text();
+            console.log('[WORKER] Durable Object response body:', respText);
+            console.log('[WORKER] Durable Object response headers:', Array.from(response.headers.entries()));
+        } catch (e) {
+            console.warn('[WORKER] Could not read Durable Object response body', e);
+        }
+
+        return response;
+    } catch (error) {
+        console.error('[WORKER] Error in /sync:', error);
+        return new Response('Error: ' + error, { status: 500 });
+    }
+});
+
+router.all('*', (request, env) => {
+    console.log('assets handler')
+    return env.ASSETS.fetch(request)
+})
+
+export default {
+    async fetch(request :IRequest, environment :Env, context :ExecutionContext) {
+        return router.handle(request, environment, context)
+    },
+    async scheduled(controller: ScheduledController, environment: Env, context: ExecutionContext) {
+        // await doATask();
+    },
+}

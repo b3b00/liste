@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList } from './store';
+    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList, settings, versionInfo } from './store';
     import {ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
@@ -16,6 +16,7 @@
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
     import {isDark} from './colors';
+    import { getVersion, saveList } from "./client"
 
 
     list.useLocalStorage();
@@ -23,6 +24,7 @@
     displayDoneItems.useLocalStorage();
     itemsHistory.useLocalStorage();
     sharedList.useLocalStorage();
+    settings.useLocalStorage();
 
         let itemsByCategory : {[category:string]:{color:string,items:ShopItem[]}}= {};
 
@@ -39,12 +41,21 @@
         let displayAll : boolean = true;
 
         export let params;
+        async function save() {
+        if ($settings.autoSave && $settings.id) {
+                await saveList($settings.id, {
+                    categories: $categories,
+                    list: $list
+                });
+            }
+        }
+
 
         function updateItemsByCategory() {
             itemsByCategory = {};
             let items = $list;
             let categos = $categories;
-            if (mode == ListMode.In) {
+            if (mode == ListMode.Inbox) {
               items = $sharedList.list;
               categos = $sharedList.categories;
             }
@@ -59,7 +70,7 @@
           }
 
         function updateSuggestions() {
-          if (mode !== ListMode.In) {
+          if (mode !== ListMode.Inbox) {
             for(let i = 0; i < $categories.length; i++) {
               const category = $categories[i];
               const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
@@ -70,19 +81,23 @@
           }
         }
 
-        $:{          
-          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit;
+        $:{
+          mode = (params.mode && params.mode == "In"? ListMode.Inbox : $listMode) ?? ListMode.Edit;
+            $list; // Explicitly depend on $list to trigger reactivity
+            $categories; // Explicitly depend on $categories to trigger reactivity
+            $sharedList; // Explicitly depend on $sharedList to trigger reactivity
             updateItemsByCategory();
             updateSuggestions();
         }
 
-        onMount(() => {
-          mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; ;
+        onMount(async () => {
+          mode = (params.mode && params.mode == "In"? ListMode.Inbox : $listMode) ?? ListMode.Edit; 
             updateItemsByCategory();
             updateSuggestions();
+            $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
         })
 
-        function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
+        async function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
           if (!itemLbl || itemLbl == undefined || itemLbl === null || itemLbl === '') {
             return;
           }
@@ -103,43 +118,47 @@
                 categoryHistory = [...new Set(categoryHistory)];
                 history[itemCat] = categoryHistory;
                 $itemsHistory = history;
+                await save();
                 updateItemsByCategory();
                 updateSuggestions();
         }
 
-        function shop(itemId: number) {
+        async function shop(itemId: number) {
 
-            let items = mode == ListMode.In ? $sharedList.list : $list;
+            let items = mode == ListMode.Inbox ? $sharedList.list : $list;
             items = items.map( x => {
                 if (x.id == itemId) {
                     x.done = !x.done;
                 }
                 return x; 
             })
-            if (mode !== ListMode.In) {
+            if (mode !== ListMode.Inbox) {
                 $sharedList.list = items;
             } else {
                 $list = items;
             }
             $list = items;
+            await save();
             updateItemsByCategory();
             updateSuggestions();
         }
 
-        function remove(itemId: number) {
-            let items = mode == ListMode.In ? $sharedList.list : $list;
-            items = items.filter( x => x.id !== itemId)            
-            if (mode !== ListMode.In) {
-                $sharedList.list = items;
-            } else {
+        async function remove(itemId: number) {
+          
+            let items = mode == ListMode.Inbox ? $sharedList.list : $list;
+            items = items.filter( x => x.id !== itemId)
+            if (mode !== ListMode.Inbox) {
                 $list = items;
+            } else {
+                $sharedList.list = items;
             }
+            await save();
             updateItemsByCategory();
             updateSuggestions();
         }        
 
         function clean() {
-          if (mode == ListMode.In) {
+          if (mode == ListMode.Inbox) {
             $sharedList.list = [];
           }
           else {
@@ -182,7 +201,7 @@
         }
 
 
-        function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
+        async function moveToCategory(item: ShopItem|undefined, destCategory: Category|undefined) {
           console.log("> moveToCategory()",item,destCategory)
           if (item && destCategory) {
             console.log(`moving ${item.id}-${item.label} to category ${destCategory.label}`,movingItem,destCategory);
@@ -202,6 +221,7 @@
 
           })
             $list = items;
+            await save();
             updateItemsByCategory();
             updateSuggestions();
           }
@@ -249,9 +269,9 @@
       {#each $categories as category}
         {#if category.label != movingItem?.category}
         <Item
-          on:click={() => {
+          on:click={async () => {
             console.log('on click category ',category);
-            moveToCategory(movingItem, category);
+            await moveToCategory(movingItem, category);
           }}
         >
           <Text style="font-weight:bold;align:center;color:{category.color}">{category.label.toUpperCase()} </Text>
@@ -273,7 +293,7 @@
 </Button>
         {#if itemsByCategory}
             {#each Object.entries(itemsByCategory) as [category,content]}
-                {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.In) && content.items && content.items.length > 0)}
+                {#if mode == ListMode.Edit || ((mode == ListMode.Shop || mode == ListMode.Inbox) && content.items && content.items.length > 0)}
                 <Paper square style="margin-bottom:25px" variant="outlined">
                   
                     <Title style="color:{content.color};font-weight:bold;text-decoration:underline">
@@ -284,7 +304,7 @@
                     {#if mode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
-                      <IconButton on:click={() => { 
+                      <IconButton on:click={async () => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
                           suggestionSelection[category] = "";
                           suggestionSelection = suggestionSelection;
@@ -303,7 +323,7 @@
                         {#if (content.items && content.items.length > 0)}
                             {#each content.items as categoryItem} 
                                 <Group variant="raised">
-                                    <Button on:click={() => shop(categoryItem.id)} variant="raised"
+                                    <Button on:click={async () => await shop(categoryItem.id)} variant="raised"
                                         style="font-weight:900; color:black;background-color:{categoryItem.color};text-decoration: {categoryItem.done ? 'line-through' : ''}">
                                       <Label style="color:{isDark(categoryItem.color) ? 'white' : 'black'}">{categoryItem.label}</Label>
                                     </Button>
@@ -316,10 +336,10 @@
                                       </Button>
                                       <Menu bind:this={menus[categoryItem.id]} anchorCorner="TOP_LEFT">
                                         <List>
-                                          <Item on:SMUI:action={() => remove(categoryItem.id)}>
+                                          <Item on:SMUI:action={async () => await remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
-                                          {#if mode !== ListMode.In}
+                                          {#if mode !== ListMode.Inbox}
                                           <Item on:SMUI:action={() => openMoveDialog(categoryItem)}>
                                             <Text>Déplacer</Text>
                                           </Item>

@@ -1,8 +1,10 @@
 <script lang="ts">
   
     import Categories from "./Categories.svelte";
-    import ShopList from "./List.svelte";    
-    import Import from "./Import.svelte";    
+    import ShopList from "./List.svelte";
+    import Import from "./Import.svelte";
+    import ListSettings from "./ListSettings.svelte";
+    import Notifications from "./Notifications.svelte";
     import {push} from 'svelte-spa-router'
     import Router from 'svelte-spa-router'
     import Button, {Label} from '@smui/button';  
@@ -13,10 +15,14 @@
     import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
     import Inbox from "svelte-material-icons/Inbox.svelte";
-    import { onMount } from 'svelte';
+    import Cog from "svelte-material-icons/Cog.svelte";
+    import Logout from "svelte-material-icons/Logout.svelte";
+    import { onMount, onDestroy } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList, categories } from "./store";
     import {compressAndEncodeBase64, decodeBase64AndDecompress} from './zip';
+    import { isAuthenticated, getCurrentUser, logout } from './client';
+    import { syncManager } from './syncManager';
     
 
     
@@ -27,7 +33,8 @@
       '/categories': Categories,
       '/list/:mode?': ShopList,
       '/': ShopList,
-      '/import/:data': Import
+      '/import/:data': Import,
+      '/settings': ListSettings
       }
   
   
@@ -49,6 +56,15 @@
           });
           $list = items;
         }
+
+        // Initialize WebSocket sync using the list ID from settings
+        // No authentication needed - sync is based on list ID only
+        console.log('[APP] Initializing sync');
+        syncManager.connect('default');
+      });
+
+      onDestroy(() => {
+        syncManager.disconnect();
       });
 
 
@@ -125,6 +141,11 @@
             <Share></Share>
           </IconButton>
         </Section>
+         <Section align="end" toolbar>
+          <IconButton on:click={() => push('/settings')} toggle>
+            <Cog></Cog>
+          </IconButton>
+        </Section>
         {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}
           <Section align="end" toolbar>
             <IconButton on:click={() => push('/list/In')} toggle>
@@ -140,6 +161,7 @@
       </Row>
     </TopAppBar>
     <Router {routes}/>
+    <Notifications />
   
   
   

@@ -45,7 +45,11 @@ export default {
 				dev: !production,	
 					
 			},
-			preprocess: sveltePreprocess()		
+			preprocess: sveltePreprocess({
+				typescript: {
+					tsconfigFile: './tsconfig.json'
+				}
+			})		
 		}),
 		// we'll extract any component CSS out into
 		// a separate file - better for performance
@@ -59,10 +63,16 @@ export default {
 		resolve({
 			browser: true,
 			dedupe: ['svelte'],
-			exportConditions: ['svelte']
+			exportConditions: ['svelte'],
+			extensions: ['.mjs', '.js', '.json', '.node', '.svelte']
 		}),
 		commonjs(),
-		typescript(),
+		typescript({
+			sourceMap: !production,
+			inlineSources: !production,
+			tsconfig: './tsconfig.json',
+			include: ['public/**/*']
+		}),
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
 		//!production && serve(),

@@ -16,10 +16,20 @@ export interface ShopItem {
 export enum ListMode {
     Shop,
     Edit,
-    In,
+    Inbox,
 }
 
 export interface SharedList {
     categories: Category[],
     list: ShopItem[],
+}
+
+export interface SaveSettings {
+    id:string|null,
+    autoSave:boolean
+}
+
+export interface VersionInfo {
+    version: string,
+    hash?: string
 }
