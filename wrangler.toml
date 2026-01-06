@@ -12,4 +12,4 @@ database_id = "50e7006c-6204-4f2f-bff8-b382db7964f0"
 [[durable_objects.bindings]]
 name = "LIST_SYNC"
 class_name = "ListSync"
-script_name = "_worker"
+script_name = "listes-worker"

@@ -1,10 +1,8 @@
 // Durable Object for managing WebSocket connections for list synchronization
 export class ListSync {
     sessions;
-    state;
     env;
     constructor(state, env) {
-        this.state = state;
         this.env = env;
         this.sessions = new Set();
     }
