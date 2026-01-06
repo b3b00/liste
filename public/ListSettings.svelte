@@ -10,6 +10,7 @@
     import { syncManager, suspendBroadcasts, resumeBroadcasts } from './syncManager';
     import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
+    import Paper, { Title, Content } from '@smui/paper';
 
 
     list.useLocalStorage();
@@ -42,8 +43,104 @@
                 categories: $categories,
                 list: $list
             });
+            notifications.show(`Liste "${$settings.id}" sauvegardée`, 'success', 3000, { always: true, listId: $settings.id });
         }
     }
+
+    async function createNewList() {
+        if (!id || id.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: id });
+            return;
+        }
+
+        // Disconnect from old list channel
+        try {
+            suspendBroadcasts();
+            if (syncManager.isConnected()) {
+                syncManager.disconnect();
+            }
+        } catch (err) {
+            console.warn('[ListSettings] Error disconnecting', err);
+        }
+
+        // Check if list already exists
+        const existing = await getList(id);
+        if (existing) {
+            notifications.show(`Une liste avec le nom "${id}" existe déjà`, 'error', 4000, { always: true, listId: id });
+            // Reconnect to current list
+            try {
+                syncManager.connect($settings.id || 'default');
+                resumeBroadcasts();
+            } catch (err) {
+                console.warn('[ListSettings] reconnect failed', err);
+            }
+            return;
+        }
+
+        // Create new empty list
+        $settings = {
+            id: id,
+            autoSave: autosave
+        };
+        $list = [];
+        
+        // Persist the empty list with current categories
+        try {
+            await saveList(id, { categories: $categories, list: [] });
+            notifications.show(`Liste "${id}" créée`, 'success', 4000, { always: true, listId: id });
+        } catch (e) {
+            notifications.show(`Erreur lors de la création de la liste "${id}": ${e?.message || e}`, 'error', 6000, { always: true, listId: id });
+        }
+
+        // Connect to the new list channel
+        try {
+            syncManager.connect(id);
+            resumeBroadcasts();
+        } catch (err) {
+            console.warn('[ListSettings] reconnect failed', err);
+        }
+    }
+
+    async function loadList() {
+        if (!id || id.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: id });
+            return;
+        }
+
+        // Disconnect from old list channel before switching
+        try {
+            suspendBroadcasts();
+            if (syncManager.isConnected()) {
+                syncManager.disconnect();
+            }
+        } catch (err) {
+            console.warn('[ListSettings] Error disconnecting', err);
+        }
+
+        const reloaded = await getList(id);
+        if(reloaded) {
+            // List exists - load it
+            $settings = {
+                id:id,
+                autoSave: autosave
+            };
+            $list = reloaded.list;
+            $categories = reloaded.categories;
+            notifications.show(`Liste "${id}" rechargée`, 'success', 3000, { always: true, listId: id });
+        }
+        else {
+            notifications.show(`La liste "${id}" n'existe pas`, 'error', 4000, { always: true, listId: id });
+        }
+        
+        // Reconnect to the new list channel
+        try {
+            syncManager.connect(id);
+            resumeBroadcasts();
+        } catch (err) {
+            console.warn('[ListSettings] reconnect failed', err);
+        }
+    }
+
 
     function downloadJSON() {
         const data = {
@@ -102,121 +199,108 @@
         right: 10px;
         text-align: right;
     }
+
+    .settings-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    .settings-section {
+        margin-bottom: 24px;
+    }
+
+    .section-content {
+        padding: 16px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .list-name-field {
+        width: 100%;
+        margin-bottom: 12px;
+    }
 </style>
 
-<div>
-<FormField align="end">
-    <Switch bind:checked={autosave} 
-    on:SMUISwitch:change={() => {
-        console.log(`Switch ON:SMUI:changed:  => ${autosave}`);
-        $settings = {
-            id:$settings.id,
-            autoSave: autosave,
-         };
-         console.log(`Settings updated: ${JSON.stringify($settings)}`);
-    }}/>
-      Sauvegarde automatique.
-  </FormField>
+<div class="settings-container">
+    <!-- Section 1: List Management -->
+    <Paper class="settings-section" elevation={3}>
+        <Title>Gestion des Listes</Title>
+        <Content class="section-content">
+            <div class="list-name-field">
+                <Textfield bind:value={id} label="Nom de la liste" outlined style="width: 100%;">
+                    <HelperText slot="helper">Entrez le nom de la liste</HelperText>
+                </Textfield>
+            </div>
+            <div class="button-group">
+                <Button on:click={createNewList} variant="raised" color="primary">
+                    <Icon class="material-icons">add</Icon>
+                    <Label>Créer nouvelle liste</Label>
+                </Button>
+                <Button on:click={save} variant="raised">
+                    <Icon class="material-icons">save</Icon>
+                    <Label>Sauvegarder</Label>
+                </Button>
+                <Button on:click={loadList} variant="raised">
+                    <Icon class="material-icons">refresh</Icon>
+                    <Label>Recharger</Label>
+                </Button>
+            </div>
+        </Content>
+    </Paper>
 
-  <FormField align="end">
-    <Switch bind:checked={notifyEnabled} 
-    on:SMUISwitch:change={() => {
-        console.log(`Switch ON:SMUI:changed:  => ${notifyEnabled}`);
-        $enableNotifications = notifyEnabled;
-        console.log(`Settings updated: ${JSON.stringify($settings)}`);
-    }}/>
-      Activer les notifications.
-  </FormField>
- 
-<br>
-     <Textfield bind:value={id} label="Identifiant" outlined>
-        <HelperText slot="helper">identifiant de la liste</HelperText>
-    </Textfield>
-    <Button on:click={async () => {
-        // Disconnect from old list channel before switching
-        try {
-            suspendBroadcasts();
-            if (syncManager.isConnected()) {
-                syncManager.disconnect();
-            }
-        } catch (err) {
-            console.warn('[ListSettings] Error disconnecting', err);
-        }
+    <!-- Section 2: Import/Export -->
+    <Paper class="settings-section" elevation={3}>
+        <Title>Import/Export</Title>
+        <Content class="section-content">
+            <div class="button-group">
+                <Button on:click={downloadJSON} variant="raised">
+                    <Icon class="material-icons">download</Icon>
+                    <Label>Exporter</Label>
+                </Button>
+                <Button on:click={uploadJSON} variant="raised">
+                    <Icon class="material-icons">upload</Icon>
+                    <Label>Importer</Label>
+                </Button>
+            </div>
+        </Content>
+    </Paper>
 
-        $settings = {
-            id:id,
-            autoSave: $settings.autoSave
-         };
-        await save();
-
-        // Reconnect to the new list channel
-        try {
-            syncManager.connect(id || 'default');
-            resumeBroadcasts();
-        } catch (err) {
-            console.warn('[ListSettings] reconnect failed', err);
-        }
-    }} variant="raised">
-        <Label><Icon class="material-icons">save</Icon>Enregistrer</Label>
-    </Button>
-
-    <Button on:click={async () => {
-        // Disconnect from old list channel before switching
-        try {
-            suspendBroadcasts();
-            if (syncManager.isConnected()) {
-                syncManager.disconnect();
-            }
-        } catch (err) {
-            console.warn('[ListSettings] Error disconnecting', err);
-        }
-
-        const reloaded = await getList(id);
-        if(reloaded) {
-            // List exists - load it
-            $settings = {
-                id:id,
-                autoSave: autosave
-            };
-            $list = reloaded.list;
-            $categories = reloaded.categories;
-        }
-        else {
-            // List doesn't exist - clear list but keep categories
-            $settings = {
-                id: id,
-                autoSave: autosave
-            };
-            $list = [];
-            // Persist the empty list with current categories
-            try {
-                await saveList(id, { categories: $categories, list: [] });
-                notifications.show(`Liste ${id} créée (vide)`, 'success', 4000, { always: true, listId: id });
-            } catch (e) {
-                notifications.show(`Erreur lors de la création de la liste ${id}: ${e?.message || e}`, 'error', 6000, { always: true, listId: id });
-            }
-        }
-        
-        // Reconnect to the new list channel
-        try {
-            syncManager.connect(id);
-            resumeBroadcasts();
-        } catch (err) {
-            console.warn('[ListSettings] reconnect failed', err);
-        }
-    }} variant="raised">
-        <Label><Icon class="material-icons">refresh</Icon>Recharger</Label>
-    </Button>
-<br/>
-    <Button on:click={downloadJSON} variant="raised">
-        <Icon class="material-icons">download</Icon>
-        <Label>Exporter</Label>
-    </Button>
-
-    <Button on:click={uploadJSON} variant="raised">
-        <Icon class="material-icons">upload</Icon>
-        <Label>Importer</Label>
-    </Button>
+    <!-- Section 3: Switches -->
+    <Paper class="settings-section" elevation={3}>
+        <Title>Préférences</Title>
+        <Content class="section-content">
+            <FormField>
+                <Switch bind:checked={autosave} 
+                    on:SMUISwitch:change={() => {
+                        console.log(`Auto-save changed: ${autosave}`);
+                        $settings = {
+                            id: $settings.id,
+                            autoSave: autosave,
+                        };
+                        console.log(`Settings updated: ${JSON.stringify($settings)}`);
+                    }}/>
+                <span slot="label">Sauvegarde automatique</span>
+            </FormField>
+            <HelperText>Si activée, chaque modification est automatiquement sauvegardée en base de données</HelperText>
+            
+            <FormField style="margin-top: 16px;">
+                <Switch bind:checked={notifyEnabled} 
+                    on:SMUISwitch:change={() => {
+                        console.log(`Notifications changed: ${notifyEnabled}`);
+                        $enableNotifications = notifyEnabled;
+                        console.log(`Notifications enabled: ${$enableNotifications}`);
+                    }}/>
+                <span slot="label">Activer les notifications</span>
+            </FormField>
+            <HelperText>Affiche des notifications lorsqu'un autre utilisateur modifie la liste</HelperText>
+        </Content>
+    </Paper>
 
     <div id="version-info">
         {#if $versionInfo}
