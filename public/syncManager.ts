@@ -3,6 +3,7 @@
 import { list, categories } from './store';
 import { get } from 'svelte/store';
 import { notifications } from './notifications';import { t } from './i18n';
+
 class SyncManager {
     private ws: WebSocket | null = null;
     private reconnectTimeout: number | null = null;
@@ -130,6 +131,52 @@ class SyncManager {
                 }, 100);
                 break;
         }
+    }
+
+    private applyListUpdate(data: any) {
+        console.log('[SYNC] Applying remote list update');
+        // Get current list before update
+        const currentList = get(list);
+        
+        // Set flag to prevent re-broadcasting this update
+        this.isApplyingRemoteUpdate = true;
+        
+        // Deep clone to ensure Svelte detects all changes
+        const newList = data.list.map((item: any) => ({...item}));
+        list.set(newList);
+        console.log('[SYNC] List store updated with', newList.length, 'items');
+        
+        // Detect and notify about changes
+        this.notifyListChanges(currentList, newList);
+        
+        // Reset flag after longer delay to ensure all reactive updates complete
+        setTimeout(() => {
+            this.isApplyingRemoteUpdate = false;
+            console.log('[SYNC] Remote update flag cleared');
+        }, 100);
+    }
+
+    private applyCategoriesUpdate(data: any) {
+        console.log('[SYNC] Applying remote categories update');
+        // Get current categories before update
+        const currentCategories = get(categories);
+        
+        // Set flag to prevent re-broadcasting this update
+        this.isApplyingRemoteUpdate = true;
+        
+        // Deep clone to ensure Svelte detects all changes
+        const newCategories = data.categories.map((cat: any) => ({...cat}));
+        categories.set(newCategories);
+        console.log('[SYNC] Categories store updated with', newCategories.length, 'categories');
+        
+        // Detect and notify about changes
+        this.notifyCategoryChanges(currentCategories, newCategories);
+        
+        // Reset flag after longer delay to ensure all reactive updates complete
+        setTimeout(() => {
+            this.isApplyingRemoteUpdate = false;
+            console.log('[SYNC] Remote categories update flag cleared');
+        }, 100);
     }
 
     private notifyListChanges(oldList: any[], newList: any[]) {

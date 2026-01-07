@@ -22,6 +22,7 @@ export enum ListMode {
 export interface SharedList {
     categories: Category[],
     list: ShopItem[],
+    version: number,
 }
 
 export interface SaveSettings {

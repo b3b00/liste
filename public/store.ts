@@ -13,10 +13,21 @@ const createWritableStore = <T>(key:string, startValue:T) => {
       set,
       useLocalStorage: () => {
         const json = localStorage.getItem(key);
+        let needsPersist = false;
         if (json) {
           if (json !== 'undefined') {
             var parsed = JSON.parse(json);
+            // Normalize old data: add version:0 if missing for SharedList
+            if (key === 'sharedList' && parsed && typeof parsed === 'object' && parsed.version === undefined) {
+              parsed.version = 0;
+              needsPersist = true;
+              console.log('[STORE] Normalized old list data with version:0');
+            }
             set(parsed);
+            // Persist normalized data immediately
+            if (needsPersist) {
+              localStorage.setItem(key, JSON.stringify(parsed));
+            }
           }
         }
 
@@ -31,6 +42,8 @@ const createWritableStore = <T>(key:string, startValue:T) => {
 
   export const list = createWritableStore<ShopItem[]>('list',JSON.parse('[]'));
 
+  export const listVersion = createWritableStore<number>('listVersion', 0);
+
   export const itemsHistory = createWritableStore<{[category:string]:string[]}>('itemsHistory',JSON.parse('{}'));
 
   export const displayDoneItems = createWritableStore<boolean|undefined>('displayDoneItems',true);
@@ -38,7 +51,7 @@ const createWritableStore = <T>(key:string, startValue:T) => {
 
   export const listMode = writable<ListMode>(ListMode.Edit);
 
-  export const sharedList = createWritableStore<SharedList>('sharedList',{categories:[],list:[]});
+  export const sharedList = createWritableStore<SharedList>('sharedList',{categories:[],list:[],version:0});
 
   export const settings = createWritableStore<SaveSettings>('settings',{id:null,autoSave:false});
 

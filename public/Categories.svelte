@@ -6,7 +6,7 @@
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
     import 'material-design-inspired-color-picker';
-    import {categories, list, itemsHistory, settings} from './store';
+    import {categories, list, itemsHistory, settings, sharedList, listVersion} from './store';
     import {type Category} from './model';
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -17,6 +17,7 @@
     list.useLocalStorage();
     itemsHistory.useLocalStorage();
     settings.useLocalStorage();
+    sharedList.useLocalStorage();
 
     let open : boolean = false;
 
@@ -32,10 +33,14 @@
 
     async function save() {
         if ($settings.autoSave) {
+            const newVersion = ($listVersion || 0) + 1;
             await saveList($settings.id, {
                 categories: $categories,
-                list: $list
+                list: $list,
+                version: newVersion
             });
+            // Update local version after save
+            $listVersion = newVersion;
         }
     }
 

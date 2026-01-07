@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, settings, categories, versionInfo, enableNotifications } from './store';
+    import { list, settings, categories, versionInfo, enableNotifications, sharedList, listVersion } from './store';
     import { notifications } from './notifications';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
@@ -17,6 +17,8 @@
     settings.useLocalStorage();
     categories.useLocalStorage();
     versionInfo.useLocalStorage();
+    sharedList.useLocalStorage();
+    listVersion.useLocalStorage();
 
      import type { VersionInfo } from "./model";
 
@@ -39,10 +41,14 @@
 
     async function save() {
         if ($settings.id) {
+            const newVersion = ($listVersion || 0) + 1;
             await saveList($settings.id, {
                 categories: $categories,
-                list: $list
+                list: $list,
+                version: newVersion
             });
+            // Update local version after save
+            $listVersion = newVersion;
             notifications.show(`Liste "${$settings.id}" sauvegardée`, 'success', 3000, { always: true, listId: $settings.id });
         }
     }
@@ -86,7 +92,8 @@
         
         // Persist the empty list with current categories
         try {
-            await saveList(id, { categories: $categories, list: [] });
+            await saveList(id, { categories: $categories, list: [], version: 0 });
+            $listVersion = 0;
             notifications.show(`Liste "${id}" créée`, 'success', 4000, { always: true, listId: id });
         } catch (e) {
             notifications.show(`Erreur lors de la création de la liste "${id}": ${e?.message || e}`, 'error', 6000, { always: true, listId: id });

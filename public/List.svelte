@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList, settings, versionInfo } from './store';
+    import { list, categories, displayDoneItems, itemsHistory, listMode, sharedList, settings, versionInfo, listVersion } from './store';
     import {ListMode, type Category, type ShopItem} from './model';
     import Paper, { Title, Content } from '@smui/paper';
     import IconButton from '@smui/icon-button'
@@ -48,10 +48,14 @@
         export let params;
         async function save() {
         if ($settings.autoSave && $settings.id) {
+                const newVersion = ($listVersion || 0) + 1;
                 await saveList($settings.id, {
                     categories: $categories,
-                    list: $list
+                    list: $list,
+                    version: newVersion
                 });
+                // Update local version after save
+                $listVersion = newVersion;
             }
         }
 

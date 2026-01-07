@@ -19,15 +19,16 @@
     import Logout from "svelte-material-icons/Logout.svelte";
     import { onMount, onDestroy } from 'svelte';
     import { ListMode } from "./model"
-    import { listMode, list, sharedList, categories, settings } from "./store";
+    import { listMode, list, sharedList, categories, settings, listVersion } from "./store";
     import {compressAndEncodeBase64, decodeBase64AndDecompress} from './zip';
-    import { isAuthenticated, getCurrentUser, logout } from './client';
+    import { isAuthenticated, getCurrentUser, logout, getListState, saveList } from './client';
     import { syncManager } from './syncManager';
     
 
     
     list.useLocalStorage();
     sharedList.useLocalStorage();
+    listVersion.useLocalStorage();
 
     const routes = {
       '/categories': Categories,
@@ -57,10 +58,59 @@
           $list = items;
         }
 
+        // Check server state before initializing WebSocket sync
+        // This prevents stale local data from overwriting fresh server data
+        const listId = $settings.id || 'default';
+        console.log('[APP] Checking server state for list:', listId);
+        
+        try {
+          const serverState = await getListState(listId);
+          if (serverState) {
+            const localVersion = $listVersion || 0;
+            const serverVersion = serverState.version || 0;
+            
+            console.log('[APP] Version check - Local:', localVersion, 'Server:', serverVersion);
+            
+            if (serverVersion > localVersion) {
+              console.log('[APP] Server has newer version, updating local data');
+              $list = serverState.list;
+              $categories = serverState.categories;
+              $listVersion = serverVersion;
+            } else if (localVersion > serverVersion) {
+              console.log('[APP] Local version is newer, will sync to server via WebSocket');
+              // Save local version to server since it's newer
+              if (listId) {
+                await saveList(listId, {
+                  list: $list,
+                  categories: $categories,
+                  version: localVersion
+                });
+                console.log('[APP] Saved local version to server');
+              }
+            } else {
+              console.log('[APP] Versions match, no update needed');
+            }
+          } else {
+            console.log('[APP] No server state found, using local data');
+            // If we have local data but server has none, save to server
+            if (listId && ($list.length > 0 || $categories.length > 0)) {
+              const version = $listVersion || 0;
+              await saveList(listId, {
+                list: $list,
+                categories: $categories,
+                version: version
+              });
+              console.log('[APP] Initialized server with local data, version:', version);
+            }
+          }
+        } catch (err) {
+          console.warn('[APP] Failed to check server state, proceeding with local data:', err);
+        }
+
         // Initialize WebSocket sync using the list ID from settings
         // Reconnection is handled explicitly in ListSettings.svelte when user changes list
-        console.log('[APP] Initializing sync with listId:', $settings.id || 'default');
-        syncManager.connect($settings.id || 'default');
+        console.log('[APP] Initializing sync with listId:', listId);
+        syncManager.connect(listId);
       });
 
       onDestroy(() => {

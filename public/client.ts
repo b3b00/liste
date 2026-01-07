@@ -36,12 +36,26 @@ export const getList = async (id: string): Promise<SharedList | undefined> => {
     const response = await fetch(url, { method: 'GET' });
     if (response.ok) {
         const data = await response.json();
+        // Normalize old data: add version:0 if missing
+        if (data && typeof data === 'object' && data.version === undefined) {
+            data.version = 0;
+            console.log('[CLIENT] Normalized old list data from server with version:0');
+        }
         console.log(`Fetched list with id ${id}`, data);
         return data as SharedList;
     } else {
         console.error(`Error fetching list with id ${id}:`, response.statusText);
         return undefined;
     }
+}
+
+/**
+ * Get current list state from server (for version checking on load)
+ * This is the same as getList but named explicitly for the check-on-load use case
+ */
+export const getListState = async (id: string): Promise<SharedList | undefined> => {
+    console.log(`[SYNC CHECK] Fetching current server state for list ${id}`);
+    return await getList(id);
 }
 
 export async function hashString(message : string): Promise<string> {

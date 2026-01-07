@@ -95,7 +95,8 @@ export class ListSync {
                         const currentList = await getList(this.env, data.listId);
                         await saveList(this.env, data.listId, {
                             list: data.list,
-                            categories: currentList?.categories || []
+                            categories: currentList?.categories || [],
+                            version: (currentList?.version || 0) + 1
                         });
                         console.log('[DURABLE] List persisted to D1');
                     } catch (err) {
@@ -119,7 +120,8 @@ export class ListSync {
                         const currentList = await getList(this.env, data.listId);
                         await saveList(this.env, data.listId, {
                             list: currentList?.list || [],
-                            categories: data.categories
+                            categories: data.categories,
+                            version: (currentList?.version || 0) + 1
                         });
                         console.log('[DURABLE] Categories persisted to D1');
                     } catch (err) {
