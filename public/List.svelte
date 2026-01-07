@@ -15,6 +15,7 @@
     import Alert from "svelte-material-icons/Alert.svelte";
     import Autocomplete from '@smui-extra/autocomplete';
     import Dialog, {Actions }  from '@smui/dialog';
+    import Textfield from '@smui/textfield';
     import {isDark} from './colors';
     import { getVersion, saveList } from "./client"
 
@@ -31,6 +32,10 @@
         let openDelete: boolean = false;
 
         let menus : {[item:string]:Menu} = {};
+
+        let openEdit: boolean = false;
+        let editingItem: ShopItem|undefined;
+        let editItemLabel: string = "";
 
         let suggestions : {[item:string]:string[]} = {};
 
@@ -226,6 +231,41 @@
             updateSuggestions();
           }
         }
+
+        // EDIT
+
+        function openEditDialog(item: ShopItem) {
+          openEdit = true;
+          editingItem = item;
+          editItemLabel = item.label;
+        }
+
+        async function closeEditDialog(e: CustomEvent<{ action: string }>) {
+          console.log(`closing edit dialog with [${e.detail.action}]`);
+          if (e.detail.action === 'ok' && editingItem) {
+            const trimmedLabel = editItemLabel.trim();
+            if (trimmedLabel) {
+              await updateItemLabel(editingItem.id, trimmedLabel);
+            }
+          }
+          openEdit = false;
+          editingItem = undefined;
+          editItemLabel = "";
+        }
+
+        async function updateItemLabel(itemId: number, newLabel: string) {
+          let items = $list;
+          items = items.map(x => {
+            if (x.id === itemId) {
+              x.label = newLabel;
+            }
+            return x;
+          });
+          $list = items;
+          await save();
+          updateItemsByCategory();
+          updateSuggestions();
+        }
     </script>
     
     <div>
@@ -280,6 +320,27 @@
       {/each}
     </List>
     </Content>
+    </Dialog>
+
+    <Dialog
+      bind:open={openEdit}
+      selection
+      aria-labelledby="edit-item-title"
+      aria-describedby="edit-item-content"
+      on:SMUIDialog:closed={closeEditDialog}
+    >
+    <Title id="edit-item-title" style="margin-left:15px;font-size:20px">Modifier l'article</Title>
+    <Content id="edit-item-content">
+      <Textfield bind:value={editItemLabel} label="Nom de l'article" style="width: 100%;" />
+    </Content>
+    <Actions>
+      <Button>
+        <Label>Annuler</Label>
+      </Button>
+      <Button action="ok">
+        <Label>OK</Label>
+      </Button>
+    </Actions>
     </Dialog>
 
         
@@ -339,6 +400,11 @@
                                           <Item on:SMUI:action={async () => await remove(categoryItem.id)}>
                                             <Text>Supprimer</Text>
                                           </Item>
+                                          {#if mode === ListMode.Edit}
+                                          <Item on:SMUI:action={() => openEditDialog(categoryItem)}>
+                                            <Text>Modifier</Text>
+                                          </Item>
+                                          {/if}
                                           {#if mode !== ListMode.Inbox}
                                           <Item on:SMUI:action={() => openMoveDialog(categoryItem)}>
                                             <Text>Déplacer</Text>
