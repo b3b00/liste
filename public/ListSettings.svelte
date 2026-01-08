@@ -11,6 +11,8 @@
     import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
     import Paper, { Title, Content } from '@smui/paper';
+    import Dialog, { Actions } from '@smui/dialog';
+    import type { ShopItem } from './model';
 
 
     list.useLocalStorage();
@@ -27,6 +29,12 @@
 
     let autosave : boolean = false;
     let notifyEnabled: boolean = false;
+
+    let openCopyDialog: boolean = false;
+    let copyListName: string = '';
+    
+    let openCreateDialog: boolean = false;
+    let createListName: string = '';
 
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
@@ -53,9 +61,21 @@
         }
     }
 
+    function openCreateListDialog() {
+        createListName = '';
+        openCreateDialog = true;
+    }
+
+    async function closeCreateDialog(e: CustomEvent<{ action: string }>) {
+        if (e.detail.action === 'create') {
+            await createNewList();
+        }
+        openCreateDialog = false;
+    }
+
     async function createNewList() {
-        if (!id || id.trim() === '') {
-            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: id });
+        if (!createListName || createListName.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: createListName });
             return;
         }
 
@@ -70,9 +90,9 @@
         }
 
         // Check if list already exists
-        const existing = await getList(id);
+        const existing = await getList(createListName);
         if (existing) {
-            notifications.show(`Une liste avec le nom "${id}" existe déjà`, 'error', 4000, { always: true, listId: id });
+            notifications.show(`Une liste avec le nom "${createListName}" existe déjà`, 'error', 4000, { always: true, listId: createListName });
             // Reconnect to current list
             try {
                 syncManager.connect($settings.id || 'default');
@@ -85,23 +105,24 @@
 
         // Create new empty list
         $settings = {
-            id: id,
+            id: createListName,
             autoSave: autosave
         };
         $list = [];
+        id = createListName;
         
         // Persist the empty list with current categories
         try {
-            await saveList(id, { categories: $categories, list: [], version: 0 });
+            await saveList(createListName, { categories: $categories, list: [], version: 0 });
             $listVersion = 0;
-            notifications.show(`Liste "${id}" créée`, 'success', 4000, { always: true, listId: id });
+            notifications.show(`Liste "${createListName}" créée`, 'success', 4000, { always: true, listId: createListName });
         } catch (e) {
-            notifications.show(`Erreur lors de la création de la liste "${id}": ${e?.message || e}`, 'error', 6000, { always: true, listId: id });
+            notifications.show(`Erreur lors de la création de la liste "${createListName}": ${e?.message || e}`, 'error', 6000, { always: true, listId: createListName });
         }
 
         // Connect to the new list channel
         try {
-            syncManager.connect(id);
+            syncManager.connect(createListName);
             resumeBroadcasts();
         } catch (err) {
             console.warn('[ListSettings] reconnect failed', err);
@@ -197,6 +218,84 @@
         input.click();
     }
 
+    function openCopyListDialog() {
+        if (!$settings.id || $settings.id.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: $settings.id });
+            return;
+        }
+        copyListName = $settings.id;
+        openCopyDialog = true;
+    }
+
+    async function closeCopyDialog(e: CustomEvent<{ action: string }>) {
+        if (e.detail.action === 'copy') {
+            await copyList();
+        }
+        openCopyDialog = false;
+    }
+
+    async function copyList() {
+        if (!copyListName || copyListName.trim() === '') {
+            notifications.show('Veuillez entrer un nom pour la copie', 'error', 4000, { always: true, listId: copyListName });
+            return;
+        }
+
+        const sourceListId = $settings.id;
+
+        // Disconnect from old list channel
+        try {
+            suspendBroadcasts();
+            if (syncManager.isConnected()) {
+                syncManager.disconnect();
+            }
+        } catch (err) {
+            console.warn('[ListSettings] Error disconnecting', err);
+        }
+
+        // Check if target list already exists
+        const existing = await getList(copyListName);
+        if (existing) {
+            notifications.show(`Une liste avec le nom "${copyListName}" existe déjà`, 'error', 4000, { always: true, listId: copyListName });
+            // Reconnect to current list
+            try {
+                syncManager.connect(sourceListId || 'default');
+                resumeBroadcasts();
+            } catch (err) {
+                console.warn('[ListSettings] reconnect failed', err);
+            }
+            return;
+        }
+
+        // Create deep copy of list items with new IDs
+        const copiedList: ShopItem[] = $list.map((item, index) => ({
+            ...item,
+            id: index + 1
+        }));
+
+        // Create deep copy of categories
+        const copiedCategories = JSON.parse(JSON.stringify($categories));
+
+        // Save the copied list
+        try {
+            await saveList(copyListName, { 
+                categories: copiedCategories, 
+                list: copiedList, 
+                version: 0 
+            });
+            notifications.show(`Liste "${sourceListId}" copiée vers "${copyListName}"`, 'success', 4000, { always: true, listId: copyListName });
+        } catch (e) {
+            notifications.show(`Erreur lors de la copie de la liste: ${e?.message || e}`, 'error', 6000, { always: true, listId: copyListName });
+        }
+
+        // Reconnect to the source list channel
+        try {
+            syncManager.connect(sourceListId || 'default');
+            resumeBroadcasts();
+        } catch (err) {
+            console.warn('[ListSettings] reconnect failed', err);
+        }
+    }
+
 </script>
 
 <style>
@@ -245,17 +344,21 @@
                 </Textfield>
             </div>
             <div class="button-group">
-                <Button on:click={createNewList} variant="raised" color="primary">
+                <Button on:click={openCreateListDialog} variant="raised" color="primary">
                     <Icon class="material-icons">add</Icon>
-                    <Label>Créer nouvelle liste</Label>
+                    <Label>Créer nouvelle liste...</Label>
                 </Button>
-                <Button on:click={save} variant="raised">
+                <Button on:click={save} variant="raised" disabled={!id || id.trim() === ''}>
                     <Icon class="material-icons">save</Icon>
                     <Label>Sauvegarder</Label>
                 </Button>
-                <Button on:click={loadList} variant="raised">
+                <Button on:click={loadList} variant="raised" disabled={!id || id.trim() === ''}>
                     <Icon class="material-icons">refresh</Icon>
                     <Label>Recharger</Label>
+                </Button>
+                <Button on:click={openCopyListDialog} variant="raised" disabled={!id || id.trim() === ''}>
+                    <Icon class="material-icons">content_copy</Icon>
+                    <Label>Copier...</Label>
                 </Button>
             </div>
         </Content>
@@ -317,4 +420,48 @@
         {/if}
     </div>
 </div>
+
+<!-- Create List Dialog -->
+<Dialog
+    bind:open={openCreateDialog}
+    selection
+    aria-labelledby="create-list-title"
+    aria-describedby="create-list-content"
+    on:SMUIDialog:closed={closeCreateDialog}
+>
+    <Title id="create-list-title" style="margin-left:15px;font-size:20px;color:rgba(0,0,0,0.87)">Créer une nouvelle liste</Title>
+    <Content id="create-list-content">
+        <Textfield bind:value={createListName} label="Nom de la liste" style="width: 100%;" />
+    </Content>
+    <Actions>
+        <Button>
+            <Label>Annuler</Label>
+        </Button>
+        <Button action="create">
+            <Label>Créer</Label>
+        </Button>
+    </Actions>
+</Dialog>
+
+<!-- Copy List Dialog -->
+<Dialog
+    bind:open={openCopyDialog}
+    selection
+    aria-labelledby="copy-list-title"
+    aria-describedby="copy-list-content"
+    on:SMUIDialog:closed={closeCopyDialog}
+>
+    <Title id="copy-list-title" style="margin-left:15px;font-size:20px;color:rgba(0,0,0,0.87)">Copier la liste</Title>
+    <Content id="copy-list-content">
+        <Textfield bind:value={copyListName} label="Nom de la nouvelle liste" style="width: 100%;" />
+    </Content>
+    <Actions>
+        <Button>
+            <Label>Annuler</Label>
+        </Button>
+        <Button action="copy">
+            <Label>Copier</Label>
+        </Button>
+    </Actions>
+</Dialog>
 
