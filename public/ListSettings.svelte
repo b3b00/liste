@@ -282,14 +282,33 @@
                 list: copiedList, 
                 version: 0 
             });
+            
+            // Switch to the new list
+            $settings = {
+                id: copyListName,
+                autoSave: autosave
+            };
+            $list = copiedList;
+            $categories = copiedCategories;
+            $listVersion = 0;
+            id = copyListName;
+            
             notifications.show(`Liste "${sourceListId}" copiée vers "${copyListName}"`, 'success', 4000, { always: true, listId: copyListName });
         } catch (e) {
             notifications.show(`Erreur lors de la copie de la liste: ${e?.message || e}`, 'error', 6000, { always: true, listId: copyListName });
+            // Reconnect to source list on error
+            try {
+                syncManager.connect(sourceListId || 'default');
+                resumeBroadcasts();
+            } catch (err) {
+                console.warn('[ListSettings] reconnect failed', err);
+            }
+            return;
         }
 
-        // Reconnect to the source list channel
+        // Connect to the new list channel
         try {
-            syncManager.connect(sourceListId || 'default');
+            syncManager.connect(copyListName);
             resumeBroadcasts();
         } catch (err) {
             console.warn('[ListSettings] reconnect failed', err);
