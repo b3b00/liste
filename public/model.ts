@@ -34,3 +34,9 @@ export interface VersionInfo {
     version: string,
     hash?: string
 }
+
+export interface ListMetadata {
+    id: string,
+    lastAccessed: number,
+    version: number,
+}

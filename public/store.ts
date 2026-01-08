@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { Category, SharedList, SaveSettings, VersionInfo } from './model';
+import type { Category, SharedList, SaveSettings, VersionInfo, ListMetadata } from './model';
 import type { ShopItem } from './model';
 import { ListMode } from './model';
 
@@ -58,3 +58,5 @@ const createWritableStore = <T>(key:string, startValue:T) => {
   export const versionInfo = createWritableStore<VersionInfo>('versionInfo',{version:'0.0.0', hash:undefined});
   
   export const enableNotifications = createWritableStore<boolean>('enableNotifications',true);
+
+  export const listsHistory = createWritableStore<ListMetadata[]>('listsHistory', []);

@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, settings, categories, versionInfo, enableNotifications, sharedList, listVersion } from './store';
+    import { list, settings, categories, versionInfo, enableNotifications, sharedList, listVersion, listsHistory } from './store';
     import { notifications } from './notifications';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
@@ -12,6 +12,7 @@
     import FormField from '@smui/form-field';
     import Paper, { Title, Content } from '@smui/paper';
     import Dialog, { Actions } from '@smui/dialog';
+    import Select, { Option } from '@smui/select';
     import type { ShopItem } from './model';
 
 
@@ -21,6 +22,7 @@
     versionInfo.useLocalStorage();
     sharedList.useLocalStorage();
     listVersion.useLocalStorage();
+    listsHistory.useLocalStorage();
 
      import type { VersionInfo } from "./model";
 
@@ -36,28 +38,94 @@
     let openCreateDialog: boolean = false;
     let createListName: string = '';
 
+    let listSuggestions: string[] = [];
+    let manualListName: string = '';
+
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
 
+    function updateListHistory(listId: string, version: number) {
+        const now = Date.now();
+        let history = $listsHistory;
+        
+        // Find existing entry
+        const existingIndex = history.findIndex(item => item.id === listId);
+        
+        if (existingIndex !== -1) {
+            // Update existing entry
+            history[existingIndex] = {
+                id: listId,
+                lastAccessed: now,
+                version: version
+            };
+        } else {
+            // Add new entry
+            history.push({
+                id: listId,
+                lastAccessed: now,
+                version: version
+            });
+        }
+        
+        // Sort by lastAccessed (most recent first)
+        history.sort((a, b) => b.lastAccessed - a.lastAccessed);
+        
+        // Optional: Limit history to 50 entries
+        if (history.length > 50) {
+            history = history.slice(0, 50);
+        }
+        
+        $listsHistory = history;
+        loadSuggestionsFromHistory();
+    }
+
+    function loadSuggestionsFromHistory() {
+        listSuggestions = $listsHistory.map(item => item.id);
+    }
+
+    async function onListSelected() {
+        if (id && id.trim() !== '' && id !== '__new__') {
+            manualListName = id;
+            await loadList();
+        }
+    }
+
+    async function loadManualList() {
+        if (manualListName && manualListName.trim() !== '') {
+            id = manualListName;
+            await loadList();
+        }
+    }
+
     onMount(async () => {
-        id = $settings.id || '';
+        id = $settings.id || '__new__';
+        manualListName = $settings.id || '';
         autosave = $settings.autoSave;
         notifyEnabled = $enableNotifications;
         //version = await getVersion();
         $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
+        loadSuggestionsFromHistory();
     });
 
     async function save() {
         if ($settings.id) {
             const newVersion = ($listVersion || 0) + 1;
-            await saveList($settings.id, {
-                categories: $categories,
-                list: $list,
-                version: newVersion
-            });
-            // Update local version after save
-            $listVersion = newVersion;
-            notifications.show(`Liste "${$settings.id}" sauvegardée`, 'success', 3000, { always: true, listId: $settings.id });
+            try {
+                await saveList($settings.id, {
+                    categories: $categories,
+                    list: $list,
+                    version: newVersion
+                });
+                // Update local version after save
+                $listVersion = newVersion;
+                updateListHistory($settings.id, newVersion);
+                notifications.show(`Liste "${$settings.id}" sauvegardée`, 'success', 3000, { always: true, listId: $settings.id });
+            } catch (e) {
+                // Even if server save fails, update local history for offline work
+                $listVersion = newVersion;
+                updateListHistory($settings.id, newVersion);
+                console.warn('[ListSettings] Save to server failed, working offline', e);
+            }
         }
     }
 
@@ -115,9 +183,14 @@
         try {
             await saveList(createListName, { categories: $categories, list: [], version: 0 });
             $listVersion = 0;
+            updateListHistory(createListName, 0);
             notifications.show(`Liste "${createListName}" créée`, 'success', 4000, { always: true, listId: createListName });
         } catch (e) {
-            notifications.show(`Erreur lors de la création de la liste "${createListName}": ${e?.message || e}`, 'error', 6000, { always: true, listId: createListName });
+            // Even if server save fails, update local history for offline work
+            $listVersion = 0;
+            updateListHistory(createListName, 0);
+            console.warn('[ListSettings] Create to server failed, working offline', e);
+            notifications.show(`Liste "${createListName}" créée (mode local)`, 'success', 4000, { always: true, listId: createListName });
         }
 
         // Connect to the new list channel
@@ -130,8 +203,10 @@
     }
 
     async function loadList() {
-        if (!id || id.trim() === '') {
-            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: id });
+        const listNameToLoad = manualListName || id;
+        
+        if (!listNameToLoad || listNameToLoad.trim() === '' || listNameToLoad === '__new__') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: listNameToLoad });
             return;
         }
 
@@ -145,24 +220,28 @@
             console.warn('[ListSettings] Error disconnecting', err);
         }
 
-        const reloaded = await getList(id);
+        const reloaded = await getList(listNameToLoad);
         if(reloaded) {
             // List exists - load it
             $settings = {
-                id:id,
+                id:listNameToLoad,
                 autoSave: autosave
             };
             $list = reloaded.list;
             $categories = reloaded.categories;
-            notifications.show(`Liste "${id}" rechargée`, 'success', 3000, { always: true, listId: id });
+            $listVersion = reloaded.version || 0;
+            id = listNameToLoad;
+            manualListName = listNameToLoad;
+            updateListHistory(listNameToLoad, reloaded.version || 0);
+            notifications.show(`Liste "${listNameToLoad}" rechargée`, 'success', 3000, { always: true, listId: listNameToLoad });
         }
         else {
-            notifications.show(`La liste "${id}" n'existe pas`, 'error', 4000, { always: true, listId: id });
+            notifications.show(`La liste "${listNameToLoad}" n'existe pas`, 'error', 4000, { always: true, listId: listNameToLoad });
         }
         
         // Reconnect to the new list channel
         try {
-            syncManager.connect(id);
+            syncManager.connect(listNameToLoad);
             resumeBroadcasts();
         } catch (err) {
             console.warn('[ListSettings] reconnect failed', err);
@@ -211,7 +290,7 @@
                 } else {
                     window.alert('Format JSON invalide. Le fichier doit contenir "categories" et "list".');
                 }
-            } catch (error) {
+            } catch (error: any) {
                 window.alert(`Erreur lors de l'import: ${error.message}`);
             }
         };
@@ -219,11 +298,12 @@
     }
 
     function openCopyListDialog() {
-        if (!$settings.id || $settings.id.trim() === '') {
-            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: $settings.id });
+        const listName = manualListName || $settings.id;
+        if (!listName || listName.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: listName });
             return;
         }
-        copyListName = $settings.id;
+        copyListName = $settings.id || '';
         openCopyDialog = true;
     }
 
@@ -292,18 +372,22 @@
             $categories = copiedCategories;
             $listVersion = 0;
             id = copyListName;
+            updateListHistory(copyListName, 0);
             
             notifications.show(`Liste "${sourceListId}" copiée vers "${copyListName}"`, 'success', 4000, { always: true, listId: copyListName });
         } catch (e) {
-            notifications.show(`Erreur lors de la copie de la liste: ${e?.message || e}`, 'error', 6000, { always: true, listId: copyListName });
-            // Reconnect to source list on error
-            try {
-                syncManager.connect(sourceListId || 'default');
-                resumeBroadcasts();
-            } catch (err) {
-                console.warn('[ListSettings] reconnect failed', err);
-            }
-            return;
+            // Even if server save fails, update local history for offline work
+            $settings = {
+                id: copyListName,
+                autoSave: autosave
+            };
+            $list = copiedList;
+            $categories = copiedCategories;
+            $listVersion = 0;
+            id = copyListName;
+            updateListHistory(copyListName, 0);
+            console.warn('[ListSettings] Copy to server failed, working offline', e);
+            notifications.show(`Liste "${sourceListId}" copiée vers "${copyListName}" (mode local)`, 'success', 4000, { always: true, listId: copyListName });
         }
 
         // Connect to the new list channel
@@ -358,24 +442,32 @@
         <Title>Gestion des Listes</Title>
         <Content class="section-content">
             <div class="list-name-field">
-                <Textfield bind:value={id} label="Nom de la liste" outlined style="width: 100%;">
-                    <HelperText slot="helper">Entrez le nom de la liste</HelperText>
-                </Textfield>
+                <Select bind:value={id} label="Listes récentes" on:SMUISelect:change={onListSelected} style="width: 100%;">
+                    <Option value="__new__">-- Sélectionnez une liste --</Option>
+                    {#each listSuggestions as listName}
+                        <Option value={listName}>{listName}</Option>
+                    {/each}
+                </Select>
+                <div style="margin-top: 12px;">
+                    <Textfield bind:value={manualListName} label="Ou entrez un nom de liste" outlined style="width: 100%;">
+                        <HelperText slot="helper">Pour charger une liste non listée ci-dessus</HelperText>
+                    </Textfield>
+                </div>
             </div>
             <div class="button-group">
                 <Button on:click={openCreateListDialog} variant="raised" color="primary">
                     <Icon class="material-icons">add</Icon>
                     <Label>Créer nouvelle liste...</Label>
                 </Button>
-                <Button on:click={save} variant="raised" disabled={!id || id.trim() === ''}>
+                <Button on:click={save} variant="raised" disabled={!manualListName || manualListName.trim() === ''}>
                     <Icon class="material-icons">save</Icon>
                     <Label>Sauvegarder</Label>
                 </Button>
-                <Button on:click={loadList} variant="raised" disabled={!id || id.trim() === ''}>
+                <Button on:click={loadManualList} variant="raised" disabled={!manualListName || manualListName.trim() === ''}>
                     <Icon class="material-icons">refresh</Icon>
-                    <Label>Recharger</Label>
+                    <Label>Charger</Label>
                 </Button>
-                <Button on:click={openCopyListDialog} variant="raised" disabled={!id || id.trim() === ''}>
+                <Button on:click={openCopyListDialog} variant="raised" disabled={!manualListName || manualListName.trim() === ''}>
                     <Icon class="material-icons">content_copy</Icon>
                     <Label>Copier...</Label>
                 </Button>
