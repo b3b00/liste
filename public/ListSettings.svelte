@@ -12,7 +12,7 @@
     import FormField from '@smui/form-field';
     import Paper, { Title, Content } from '@smui/paper';
     import Dialog, { Actions } from '@smui/dialog';
-    import Select, { Option } from '@smui/select';
+    import Autocomplete from '@smui/autocomplete';
     import type { ShopItem } from './model';
 
 
@@ -39,7 +39,6 @@
     let createListName: string = '';
 
     let listSuggestions: string[] = [];
-    let manualListName: string = '';
 
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
@@ -85,21 +84,12 @@
 
     async function onListSelected() {
         if (id && id.trim() !== '' && id !== '__new__') {
-            manualListName = id;
-            await loadList();
-        }
-    }
-
-    async function loadManualList() {
-        if (manualListName && manualListName.trim() !== '') {
-            id = manualListName;
             await loadList();
         }
     }
 
     onMount(async () => {
-        id = $settings.id || '__new__';
-        manualListName = $settings.id || '';
+        id = $settings.id || '';
         autosave = $settings.autoSave;
         notifyEnabled = $enableNotifications;
         //version = await getVersion();
@@ -203,10 +193,8 @@
     }
 
     async function loadList() {
-        const listNameToLoad = manualListName || id;
-        
-        if (!listNameToLoad || listNameToLoad.trim() === '' || listNameToLoad === '__new__') {
-            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: listNameToLoad });
+        if (!id || id.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: id });
             return;
         }
 
@@ -220,28 +208,26 @@
             console.warn('[ListSettings] Error disconnecting', err);
         }
 
-        const reloaded = await getList(listNameToLoad);
+        const reloaded = await getList(id);
         if(reloaded) {
             // List exists - load it
             $settings = {
-                id:listNameToLoad,
+                id: id,
                 autoSave: autosave
             };
             $list = reloaded.list;
             $categories = reloaded.categories;
             $listVersion = reloaded.version || 0;
-            id = listNameToLoad;
-            manualListName = listNameToLoad;
-            updateListHistory(listNameToLoad, reloaded.version || 0);
-            notifications.show(`Liste "${listNameToLoad}" rechargée`, 'success', 3000, { always: true, listId: listNameToLoad });
+            updateListHistory(id, reloaded.version || 0);
+            notifications.show(`Liste "${id}" rechargée`, 'success', 3000, { always: true, listId: id });
         }
         else {
-            notifications.show(`La liste "${listNameToLoad}" n'existe pas`, 'error', 4000, { always: true, listId: listNameToLoad });
+            notifications.show(`La liste "${id}" n'existe pas`, 'error', 4000, { always: true, listId: id });
         }
         
         // Reconnect to the new list channel
         try {
-            syncManager.connect(listNameToLoad);
+            syncManager.connect(id);
             resumeBroadcasts();
         } catch (err) {
             console.warn('[ListSettings] reconnect failed', err);
@@ -298,9 +284,8 @@
     }
 
     function openCopyListDialog() {
-        const listName = manualListName || $settings.id;
-        if (!listName || listName.trim() === '') {
-            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: listName });
+        if (!id || id.trim() === '') {
+            notifications.show('Veuillez entrer un nom de liste', 'error', 4000, { always: true, listId: id });
             return;
         }
         copyListName = $settings.id || '';
@@ -442,32 +427,30 @@
         <Title>Gestion des Listes</Title>
         <Content class="section-content">
             <div class="list-name-field">
-                <Select bind:value={id} label="Listes récentes" on:SMUISelect:change={onListSelected} style="width: 100%;">
-                    <Option value="__new__">-- Sélectionnez une liste --</Option>
-                    {#each listSuggestions as listName}
-                        <Option value={listName}>{listName}</Option>
-                    {/each}
-                </Select>
-                <div style="margin-top: 12px;">
-                    <Textfield bind:value={manualListName} label="Ou entrez un nom de liste" outlined style="width: 100%;">
-                        <HelperText slot="helper">Pour charger une liste non listée ci-dessus</HelperText>
-                    </Textfield>
-                </div>
+                <Autocomplete
+                    bind:value={id}
+                    options={listSuggestions}
+                    label="Nom de la liste"
+                    on:SMUIAutocomplete:selected={onListSelected}
+                    style="width: 100%;"
+                >
+                    <HelperText slot="helper">Sélectionnez ou entrez un nom de liste</HelperText>
+                </Autocomplete>
             </div>
             <div class="button-group">
                 <Button on:click={openCreateListDialog} variant="raised" color="primary">
                     <Icon class="material-icons">add</Icon>
                     <Label>Créer nouvelle liste...</Label>
                 </Button>
-                <Button on:click={save} variant="raised" disabled={!manualListName || manualListName.trim() === ''}>
+                <Button on:click={save} variant="raised" disabled={!id || id.trim() === ''}>
                     <Icon class="material-icons">save</Icon>
                     <Label>Sauvegarder</Label>
                 </Button>
-                <Button on:click={loadManualList} variant="raised" disabled={!manualListName || manualListName.trim() === ''}>
+                <Button on:click={onListSelected} variant="raised" disabled={!id || id.trim() === ''}>
                     <Icon class="material-icons">refresh</Icon>
                     <Label>Charger</Label>
                 </Button>
-                <Button on:click={openCopyListDialog} variant="raised" disabled={!manualListName || manualListName.trim() === ''}>
+                <Button on:click={openCopyListDialog} variant="raised" disabled={!id || id.trim() === ''}>
                     <Icon class="material-icons">content_copy</Icon>
                     <Label>Copier...</Label>
                 </Button>
