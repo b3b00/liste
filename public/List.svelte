@@ -117,9 +117,9 @@
                 return x; 
             })
             if (mode !== ListMode.In) {
-                $sharedList.list = items;
-            } else {
                 $list = items;
+            } else {
+                $sharedList.list = items;
             }
             $list = items;
             updateItemsByCategory();
