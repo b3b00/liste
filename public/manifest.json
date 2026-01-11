@@ -4,11 +4,10 @@
     "app_name": "Listes",
     "description": "l'application de liste de course de vos rêves !",
     "start_url": "./",
-    "start-url": "./",
     "Scope": "./",
     "display": "standalone",
     "theme_color": "#00a2dd",
-    "background-color": "#00a2dd",
+    "background_color": "#00a2dd",
     "orientation": "portrait-primary",
     "prefer_related_applications":false,
     "screenshots": [
