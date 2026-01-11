@@ -130,9 +130,9 @@
             let items = mode == ListMode.In ? $sharedList.list : $list;
             items = items.filter( x => x.id !== itemId)            
             if (mode !== ListMode.In) {
-                $list.list = items;
+                $list = items;
             } else {
-                $sharedList = items;
+                $sharedList.list = items;
             }
             updateItemsByCategory();
             updateSuggestions();
