@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { onMount } from "svelte";
-    import { list, settings, categories, versionInfo, enableNotifications, sharedList, listVersion, listsHistory } from './store';
+    import { list, settings, categories, versionInfo, enableNotifications, sharedList, listVersion, listsHistory, lists } from './store';
     import { notifications } from './notifications';
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
@@ -12,7 +12,7 @@
     import FormField from '@smui/form-field';
     import Paper, { Title, Content } from '@smui/paper';
     import Dialog, { Actions } from '@smui/dialog';
-    import Autocomplete from '@smui/autocomplete';
+    import Autocomplete from '@smui-extra/autocomplete';
     import type { ShopItem } from './model';
 
 
@@ -23,6 +23,7 @@
     sharedList.useLocalStorage();
     listVersion.useLocalStorage();
     listsHistory.useLocalStorage();
+    lists.useLocalStorage();
 
      import type { VersionInfo } from "./model";
 
@@ -100,18 +101,25 @@
     async function save() {
         if ($settings.id) {
             const newVersion = ($listVersion || 0) + 1;
+            const listData = {
+                categories: $categories,
+                list: $list,
+                version: newVersion
+            };
+            
+            // Update lists store
+            const storedList = { id: $settings.id!, categories: $categories, items: $list, version: newVersion };
+            const idx = $lists.findIndex(l => l.id === $settings.id);
+            $lists = idx >= 0 
+                ? $lists.map((l, i) => i === idx ? storedList : l)
+                : [...$lists, storedList];
+            
             try {
-                await saveList($settings.id, {
-                    categories: $categories,
-                    list: $list,
-                    version: newVersion
-                });
-                // Update local version after save
+                await saveList($settings.id, listData);
                 $listVersion = newVersion;
                 updateListHistory($settings.id, newVersion);
                 notifications.show(`Liste "${$settings.id}" sauvegardée`, 'success', 3000, { always: true, listId: $settings.id });
             } catch (e) {
-                // Even if server save fails, update local history for offline work
                 $listVersion = newVersion;
                 updateListHistory($settings.id, newVersion);
                 console.warn('[ListSettings] Save to server failed, working offline', e);
@@ -198,6 +206,15 @@
             return;
         }
 
+        // Save current list before switching
+        if ($settings.id && $settings.id.trim() !== '') {
+            const storedList = { id: $settings.id!, categories: $categories, items: $list, version: $listVersion || 0 };
+            const idx = $lists.findIndex(l => l.id === $settings.id);
+            $lists = idx >= 0 
+                ? $lists.map((l, i) => i === idx ? storedList : l)
+                : [...$lists, storedList];
+        }
+
         // Disconnect from old list channel before switching
         try {
             suspendBroadcasts();
@@ -210,7 +227,7 @@
 
         const reloaded = await getList(id);
         if(reloaded) {
-            // List exists - load it
+            // List exists on server
             $settings = {
                 id: id,
                 autoSave: autosave
@@ -218,11 +235,33 @@
             $list = reloaded.list;
             $categories = reloaded.categories;
             $listVersion = reloaded.version || 0;
+            
+            // Update lists store
+            const storedList = { id: id, categories: reloaded.categories, items: reloaded.list, version: reloaded.version || 0 };
+            const idx = $lists.findIndex(l => l.id === id);
+            $lists = idx >= 0 
+                ? $lists.map((l, i) => i === idx ? storedList : l)
+                : [...$lists, storedList];
+            
             updateListHistory(id, reloaded.version || 0);
             notifications.show(`Liste "${id}" rechargée`, 'success', 3000, { always: true, listId: id });
         }
         else {
-            notifications.show(`La liste "${id}" n'existe pas`, 'error', 4000, { always: true, listId: id });
+            // Try loading from lists store
+            const localList = $lists.find(l => l.id === id);
+            if (localList) {
+                $settings = {
+                    id: id,
+                    autoSave: autosave
+                };
+                $list = localList.items;
+                $categories = localList.categories;
+                $listVersion = localList.version || 0;
+                updateListHistory(id, localList.version || 0);
+                notifications.show(`Liste "${id}" chargée (mode hors ligne)`, 'success', 3000, { always: true, listId: id });
+            } else {
+                notifications.show(`La liste "${id}" n'existe pas`, 'error', 4000, { always: true, listId: id });
+            }
         }
         
         // Reconnect to the new list channel
@@ -428,6 +467,7 @@
         <Content class="section-content">
             <div class="list-name-field">
                 <Autocomplete
+                    combobox
                     bind:value={id}
                     options={listSuggestions}
                     label="Nom de la liste"

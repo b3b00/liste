@@ -40,3 +40,10 @@ export interface ListMetadata {
     lastAccessed: number,
     version: number,
 }
+
+export interface StoredList {
+    id: string,
+    categories: Category[],
+    items: ShopItem[],
+    version: number,
+}
