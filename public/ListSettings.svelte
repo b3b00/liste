@@ -5,9 +5,10 @@
     import Button, {Label, Icon} from '@smui/button';  
     import Textfield from '@smui/textfield';  
     import HelperText from '@smui/textfield/helper-text';
-    import { saveList, getList, getVersion } from "./client"
+    import { saveList, getList, getVersion, getCurrentUser, isAuthenticated } from "./client"
     import Switch from '@smui/switch';
     import FormField from '@smui/form-field';
+    import Paper from '@smui/paper';
 
 
     list.useLocalStorage();
@@ -18,6 +19,8 @@
     let id = '';
 
     let autosave : boolean = false;
+    let user: { id: string; email: string; name: string; picture: string } | null = null;
+    let authenticated = false;
 
 
      $: console.log(`Settings changed: ${JSON.stringify($settings)}`);
@@ -27,6 +30,11 @@
         autosave = $settings.autoSave;
         //version = await getVersion();
         $versionInfo = await getVersion() || {version:'0.0.0', hash:undefined};
+        authenticated = isAuthenticated();
+        if (authenticated) {
+            user = getCurrentUser();
+            console.log('User data in ListSettings:', user);
+        }
     });
 
     async function save() {
@@ -95,9 +103,70 @@
         right: 10px;
         text-align: right;
     }
+    
+    .user-paper {
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .user-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+    }
+    
+    .user-details {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 4px;
+    }
+    
+    .user-email {
+        font-size: 0.9rem;
+        color: #666;
+    }
 </style>
 
 <div>
+{#if authenticated && user}
+    <Paper class="user-paper" elevation={2}>
+        <div class="user-info">
+            {#if user.picture}
+                <img 
+                    src={user.picture} 
+                    alt={user.name} 
+                    class="user-avatar" 
+                    referrerpolicy="no-referrer"
+                    crossorigin="anonymous"
+                    on:error={(e) => {
+                        console.error('Failed to load user picture:', user.picture);
+                        e.currentTarget.style.display = 'none';
+                    }} 
+                />
+            {:else}
+                <div class="user-avatar" style="background: #ccc; display: flex; align-items: center; justify-content: center;">
+                    {user.name ? user.name[0].toUpperCase() : '?'}
+                </div>
+            {/if}
+            <div class="user-details">
+                <span class="user-name">{user.name}</span>
+                <span class="user-email">{user.email}</span>                
+            </div>
+        </div>
+    </Paper>
+{/if}
+
 <FormField align="end">
     <Switch bind:checked={autosave} 
     on:SMUISwitch:change={() => {
