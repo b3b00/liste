@@ -2,4 +2,5 @@
 # .dev.vars is gitignored and used for local development
 
 # Google OAuth2 credentials
+GOOGLE_CLIENT_ID=your-google-client-id-here
 GOOGLE_CLIENT_SECRET=your-google-client-secret-here
