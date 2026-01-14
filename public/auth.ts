@@ -27,10 +27,11 @@ export interface AuthenticatedRequest extends IRequest {
 /**
  * Middleware to verify JWT token and extract user information
  */
-export async function withAuth(request: AuthenticatedRequest): Promise<void | Response> {
+export async function withAuth(request: AuthenticatedRequest, env: Env): Promise<void | Response> {
     const authHeader = request.headers.get('Authorization');
-    
+    console.log('withAuth - Authorization header:', authHeader);
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('401 : withAuth - Missing or invalid Authorization header');
         return new Response(JSON.stringify({ error: 'Unauthorized', message: 'Missing or invalid authorization header' }), {
             status: 401,
             headers: { 'Content-Type': 'application/json' }
@@ -40,10 +41,14 @@ export async function withAuth(request: AuthenticatedRequest): Promise<void | Re
     const token = authHeader.substring(7);
     
     try {
+        console.log('withAuth - Verifying token with Google');
         // Verify the ID token with Google
         const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
         
         if (!response.ok) {
+            console.log('401 : withAuth - Token verification failed');
+            const body = await response.text();
+            console.log('401 : Token verification response:', body);
             return new Response(JSON.stringify({ error: 'Unauthorized', message: 'Invalid token' }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
@@ -51,6 +56,7 @@ export async function withAuth(request: AuthenticatedRequest): Promise<void | Re
         }
 
         const tokenInfo = await response.json() as { sub: string; email: string; email_verified: string };
+        console.log('withAuth - Token verified, user info:', tokenInfo);
         
         // Attach user info to request
         request.userId = tokenInfo.sub;
@@ -83,6 +89,8 @@ export async function exchangeCodeForTokens(
         grant_type: 'authorization_code'
     });
 
+    console.log('Exchanging code for tokens at:', tokenEndpoint+"?"+params.toString());
+
     const response = await fetch(tokenEndpoint, {
         method: 'POST',
         headers: {
@@ -92,6 +100,9 @@ export async function exchangeCodeForTokens(
     });
 
     if (!response.ok) {
+        console.log('Token exchange failed with status:', response.status);
+        const errorBody = await response.text();
+        console.log('Token exchange error response:', errorBody);
         const error = await response.text();
         throw new Error(`Token exchange failed: ${error}`);
     }
@@ -121,15 +132,19 @@ export async function getUserInfo(accessToken: string): Promise<GoogleUserInfo> 
  */
 export async function saveUser(env: Env, userInfo: GoogleUserInfo): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
-    
-    await env.D1_lists.prepare(
-        `INSERT INTO users (id, email, name, picture, created_at, last_login)
+    try {
+        console.log('Saving user to database:', userInfo);
+        let a = await env.D1_lists.prepare(
+            `INSERT INTO users (id, email, name, picture, created_at, last_login)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
          ON CONFLICT(id) DO UPDATE SET
             name = ?3,
             picture = ?4,
             last_login = ?6`
-    )
-    .bind(userInfo.id, userInfo.email, userInfo.name, userInfo.picture, now, now)
-    .run();
+        )
+            .bind(userInfo.id, userInfo.email, userInfo.name, userInfo.picture, now, now)
+            .run();
+    } catch (e) {
+        console.error('Error saving user:', e);
+    }
 }

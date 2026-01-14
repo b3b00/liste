@@ -5,14 +5,16 @@ import { type KVNamespace, type ExecutionContext, type ScheduledController, type
 import { get } from 'svelte/store'
 import { getList, saveList, getUserLists } from './logic'
 import type { SharedList } from './model'
-import { withAuth, type AuthenticatedRequest, exchangeCodeForTokens, getUserInfo, saveUser } from './auth'
+import { withAuthGeneric, type OAuthConfiguration, type AuthenticatedRequest, exchangeCodeForTokens,  saveUser, type AuthenticationError, type AuthenticationInfo, type UserInfo } from './authMiddleware'
+
 
 // Env interface - this should match worker-configuration.d.ts
-interface Env {
+export interface Env {
     D1_lists: D1Database;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
     GOOGLE_REDIRECT_URI: string;
+    SCOPE: string;
     ASSETS: Fetcher;
 }
 
@@ -28,6 +30,35 @@ type LRequest = {
 const router = Router()
 
 
+export async function getUserInfo(accessToken: string): Promise<UserInfo> {
+    const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        }
+    });
+    if (!response.ok) {        
+        throw new Error(`Failed to get user info ${response.status} - ${response.statusText} : ${await response.text()}`);
+    }
+    var userInfo = await response.json() as UserInfo;
+    return userInfo;
+}
+
+function oauthConfigBuilder(env: Env): OAuthConfiguration {
+    return {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        redirectUri: env.GOOGLE_REDIRECT_URI,
+        authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+        userInfoEndpoint: 'https://openidconnect.googleapis.com/v1/userinfo',
+        tokenVerificationEndpoint: 'https://oauth2.googleapis.com/tokeninfo?id_token=',      
+        tokenEndpoint: 'https://oauth2.googleapis.com/token',
+        callbackEndpoint: '/auth/callback',
+        scope: env.SCOPE,
+        getUserInfo: getUserInfo
+    };
+}
+
+
 async function streamToText(stream: ReadableStream<Uint8Array> | null): Promise<string> {
     if (!stream) {
         return '';
@@ -38,7 +69,6 @@ async function streamToText(stream: ReadableStream<Uint8Array> | null): Promise<
 
 const withPostQuery = async (request:IRequest) => {
     let body = await streamToText(request.body);
-    console.log(body);
     var params = new URLSearchParams(body);
     request.postQuery={};
     params.forEach((value,key,parent) => {
@@ -80,6 +110,10 @@ async function notFoundJson(env:Env, request:IRequest, data :any) {
     return error(404,data);
 }
 
+async function unauthorized(env:Env, request:IRequest, data :any) {
+    return error(401,data);
+}
+
 async function renderJson(env:Env, request:IRequest, data :any) {
     const payload = JSON.stringify(data);
     var response = new Response(payload);
@@ -89,36 +123,25 @@ async function renderJson(env:Env, request:IRequest, data :any) {
 
 // OAuth2 login endpoint
 router.get<IRequest, CF>('/auth/login', async (request: IRequest, env: Env) => {
+    const referer = request.headers.get('referer');
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', env.GOOGLE_CLIENT_ID);
     authUrl.searchParams.set('redirect_uri', env.GOOGLE_REDIRECT_URI);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', 'openid email profile');
+    authUrl.searchParams.set('scope', env.SCOPE);
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'select_account'); // Force account selection
-    
     return Response.redirect(authUrl.toString(), 302);
 });
 
 // OAuth2 callback endpoint
-router.get<IRequest, CF>('/auth/callback', async (request: IRequest, env: Env) => {
+router.get<IRequest, CF>('/auth/callback', withAuthGeneric(oauthConfigBuilder), async (request: IRequest, env: Env) => {
     try {
-        const url = new URL(request.url);
-        const code = url.searchParams.get('code');
-        
-        if (!code) {
-            return new Response('Missing authorization code', { status: 400 });
+       if (request.authenticationInfo && request.authenticationInfo.isError) {
+        const authError = request.authenticationInfo as AuthenticationError;
+        return unauthorized(env, request, authError);
         }
-
-        // Exchange code for tokens
-        const tokens = await exchangeCodeForTokens(env, code);
-        
-        // Get user info
-        const userInfo = await getUserInfo(tokens.access_token);
-        
-        // Save user to database
-        await saveUser(env, userInfo);
-        
+        const info = request.authenticationInfo as AuthenticationInfo;
         // Return HTML page that stores token and redirects
         const html = `
             <!DOCTYPE html>
@@ -127,16 +150,16 @@ router.get<IRequest, CF>('/auth/callback', async (request: IRequest, env: Env) =
             <body>
                 <script>
                     // Store all user data
-                    localStorage.setItem('google_id_token', '${tokens.id_token}');
-                    localStorage.setItem('user_id', '${userInfo.id}');
-                    localStorage.setItem('user_email', '${userInfo.email}');
-                    localStorage.setItem('user_name', '${userInfo.name}');
-                    localStorage.setItem('user_picture', '${userInfo.picture}');
+                    localStorage.setItem('google_id_token', '${info.token}');
+                    localStorage.setItem('user_id', '${info.user?.id}');
+                    localStorage.setItem('user_email', '${info.user?.email}');
+                    localStorage.setItem('user_name', '${info.user?.name}');
+                    localStorage.setItem('user_picture', '${info.user?.picture}');
                     
                     // Wait a moment to ensure localStorage is written, then redirect
                     setTimeout(() => {
                         window.location.replace('/app.html');
-                    }, 100);
+                    }, 5000);
                 </script>
                 <p>Login successful! Redirecting...</p>
             </body>
@@ -212,17 +235,27 @@ router.get<IRequest, CF>('/auth/logout', async (request: IRequest, env: Env) => 
 });
 
 // Get current user info
-router.get<AuthenticatedRequest, CF>('/auth/me', withAuth, async (request: AuthenticatedRequest, env: Env) => {
+router.get<AuthenticatedRequest, CF>('/auth/me', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+    if (request.authenticationInfo && request.authenticationInfo.isError) {
+        const authError = request.authenticationInfo;
+        return unauthorized(env, request, authError);
+    }
+    const info = request.authenticationInfo as AuthenticationInfo;
     return renderOkJson(env, request, {
-        userId: request.userId,
-        email: request.userEmail
+        userId: info.user?.id,
+        email: info.user?.email
     });
 });
 
 // Get all lists for authenticated user
-router.get<AuthenticatedRequest, CF>('/lists', withAuth, async (request: AuthenticatedRequest, env: Env) => {
+router.get<AuthenticatedRequest, CF>('/lists', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+    if (request.authenticationInfo && request.authenticationInfo.isError) {
+        const authError = request.authenticationInfo;
+        return unauthorized(env, request, authError);
+    }
     try {
-        const lists = await getUserLists(env, request.userId!);
+        const info = request.authenticationInfo as AuthenticationInfo;
+        const lists = await getUserLists(env, info.user?.id!);
         return renderOkJson(env, request, okResult(lists));
     } catch (e: any) {
         return await renderInternalServorErrorJson(env, request,
@@ -230,11 +263,16 @@ router.get<AuthenticatedRequest, CF>('/lists', withAuth, async (request: Authent
     }
 });
  
-router.get<AuthenticatedRequest, CF>('/list/:id', withAuth, async (request: AuthenticatedRequest, env: Env) => {
-    try {
-        console.log('GET /list/:id', request.params.id);
+router.get<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+    if (request.authenticationInfo && request.authenticationInfo.isError) {
+        const authError = request.authenticationInfo;
+        return unauthorized(env, request, authError);
+    }
+try {
+        
+        const info = request.authenticationInfo as AuthenticationInfo;
         const id = request.params.id;
-        const p = await getList(env, request.userId!, id);
+        const p = await getList(env, info.user?.id!, id);
         if (p === undefined) {
             return await notFoundJson(env, request, errorResult([`list with id ${id} not found`],null));
         }
@@ -251,15 +289,17 @@ router.get<AuthenticatedRequest, CF>('/list/:id', withAuth, async (request: Auth
 // path parameters
 //   - id (string) : list id
 // body 
-router.post<AuthenticatedRequest, CF>('/list/:id', withAuth, withParams, async (request: AuthenticatedRequest, env: Env) => {
+router.post<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBuilder), withParams, async (request: AuthenticatedRequest, env: Env) => {
+    if (request.authenticationInfo && request.authenticationInfo.isError) {
+        const authError = request.authenticationInfo;
+        return unauthorized(env, request, authError);
+    }
     try {
-        console.log('POST LIST...',request);
+        const info = request.authenticationInfo as AuthenticationInfo;
         const id = request.params.id;
         const body = await streamToText(request.body);
-        console.log("POST",body);
         const list = JSON.parse(body) as SharedList
-        console.log(`POST /list/${id}`,list);
-        await saveList(env, request.userId!, id, list);
+        await saveList(env,info.user?.id!, id, list);
         return renderOkJson(env,request,{});
 
     } catch (e :any) {
@@ -272,14 +312,17 @@ router.post<AuthenticatedRequest, CF>('/list/:id', withAuth, withParams, async (
 // path parameters
 //   - id (string) : list id
 // body 
-router.put<AuthenticatedRequest, CF>('/list/:id', withAuth, async (request: AuthenticatedRequest, env: Env) => {
-    try {                        
+router.put<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+    if (request.authenticationInfo && request.authenticationInfo.isError) {
+        const authError = request.authenticationInfo;
+        return unauthorized(env, request, authError);
+    }
+    try {              
+        const info = request.authenticationInfo as AuthenticationInfo;
         const id = request.params.id;
         const body = await streamToText(request.body);
-        console.log("PUT",body);
         const list = JSON.parse(body) as SharedList
-        console.log('PUT /list/:id',list);
-        await saveList(env, request.userId!, id, list);
+        await saveList(env, info.user?.id!, id, list);
         return renderOkJson(env,request,{});
 
     } catch (e :any) {
@@ -289,7 +332,7 @@ router.put<AuthenticatedRequest, CF>('/list/:id', withAuth, async (request: Auth
 })
 
 // Auth check for root path - serve a page that checks localStorage
-router.get('/', async (request: IRequest, env: Env) => {
+router.get('/', withAuthGeneric(oauthConfigBuilder) , async (request: IRequest, env: Env) => {
     // Serve a simple HTML page that checks auth and redirects if needed
     const html = `<!DOCTYPE html>
 <html>
@@ -321,9 +364,8 @@ router.get('/', async (request: IRequest, env: Env) => {
     });
 });
 
-router.all('*', (request, env) => {
-    console.log('assets handler')
-    return env.ASSETS.fetch(request)
+router.all<AuthenticatedRequest, CF>('*', (request : AuthenticatedRequest, env: Env) => {
+    return env.ASSETS.fetch(request.url)
 })
 
 export default {
