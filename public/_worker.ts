@@ -36,7 +36,6 @@ const router = Router()
 
 
 export async function getUserInfo(oauthConfig: OAuthConfiguration, accessToken: string): Promise<UserInfo> {
-    console.log(`Getting user info with access token >${accessToken}< and user agent >${oauthConfig.userAgent}<`);
     const response = await fetch("https://api.github.com/user", {
         headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -50,7 +49,6 @@ export async function getUserInfo(oauthConfig: OAuthConfiguration, accessToken: 
     var userInfo = raw as UserInfo;
     userInfo.picture = raw.avatar_url; // map avatar_url to picture  
     userInfo.email = raw.email || ''; // ensure email is a string
-    console.log('User info retrieved:', userInfo);
     return userInfo;
 }
 
@@ -172,7 +170,6 @@ router.get<IRequest, CF>('/auth/callback', withAuthGeneric<Env>(oauthConfigBuild
             headers: { 'Content-Type': 'text/html' }
         });
     } catch (e: any) {
-        console.error('Auth callback error:', e);
         return new Response(`Authentication failed: ${e.message}`, { status: 500 });
     }
 });

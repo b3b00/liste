@@ -7,12 +7,11 @@ export interface D1Result<T> {
     meta : { rows_written: number, changes: number }
 }
 
-export async function getList(env: Env, userId: string, id: string): Promise<SharedList | undefined> {
-    console.log(`get list for user ${userId}, id ${id}`, env);
+export async function getList(env: Env, userId: string, id: string): Promise<SharedList | undefined> {    
     try {
         console.log(`sql SELECT * FROM shoppingList WHERE id='${id}' AND user_id='${userId}'`);
         const result: D1Result<{id:string, content:string, user_id:string}> = await env.D1_lists.prepare(
-            'SELECT * FROM shoppingList WHERE id=?1 AND user_id=?2'
+            "SELECT * FROM shoppingList WHERE id=?1 AND user_id=?2"
         )
             .bind(decodeURI(id), userId)
             .all()

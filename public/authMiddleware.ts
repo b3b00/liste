@@ -234,11 +234,9 @@ export async function exchangeCodeForTokens<T>(
         //const tokens = await response.json();
         var text = await response.text();
         const tokens = JSON.parse(text);
-        console.log('Tokens received:', tokens);
         return tokens as TokenResponse;
     }
     catch (error: Error | any) {
-        console.log('exchangeCodeForTokens error', error);
         throw new Error(`exchangeCodeForTokens - error during token exchange: ${error.message}`);
     }
 

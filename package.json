@@ -6,7 +6,7 @@
     "description": "Template for Cloudflare pages using itty-router and svelte",
     "scripts": {
         "format": "prettier --write '**/*.{js,css,json,md}'",
-        "dev": "wrangler pages dev ./public/ --persist-to=./.wrangler/state/d1 --d1=D1_lists --port=8888",
+        "dev": "wrangler pages dev ./public/ --persist-to=./.wrangler/state/d1 --d1=D1_lists --port=8888  --log-level debug",
         "updateversion": "node setVersion.js",
         "build:front": "npm run updateversion && rollup -c",
         "build:auto": "npm run updateversion && rollup -c -w",
