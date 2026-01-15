@@ -2,10 +2,8 @@ import type { IRequest } from 'itty-router';
 
 export interface TokenResponse {
     access_token: string;
-    expires_in: number;
     token_type: string;
     scope: string;
-    id_token: string;
 }
 
 export interface UserInfo {
@@ -28,8 +26,9 @@ export interface OAuthConfiguration {
     authEndpoint: string;
     tokenEndpoint: string;
     callbackEndpoint: string;
-    scope: string,    
-    getUserInfo: (accessToken: string) => Promise<UserInfo>;
+    scope: string,
+    getUserInfo: (authConfig: OAuthConfiguration, accessToken: string) => Promise<UserInfo>;
+    userAgent: string
 }
 
 export interface AuthenticatedRequest extends IRequest {
@@ -95,14 +94,14 @@ export function withAuthGeneric<T>(authConfigBuilder: (env: T) => OAuthConfigura
             var authConfig = authConfigBuilder(env);
             const tokens = await exchangeCodeForTokens(env, code, authConfigBuilder);
             // Get user info
-            const userInfo = await authConfig.getUserInfo(tokens.access_token);
+            const userInfo = await authConfig.getUserInfo(authConfig,tokens.access_token);
             // Save user to database
 
             const ok: AuthenticationInfo = {
                 isError: false,
                 isAuthenticated: true,
                 user: userInfo,
-                token: tokens.id_token
+                token: tokens.access_token
             };
             request.authenticationInfo = ok;
             return;
@@ -137,33 +136,42 @@ export function withAuthGeneric<T>(authConfigBuilder: (env: T) => OAuthConfigura
 
     const token = authHeader.substring(7);
     
-    try {        
-        // Verify the ID token 
-        const url = `${authConfig.tokenVerificationEndpoint}${token}`;
-        const response = await fetch(url);
+        try {    
+        let user: UserInfo = { id: '', email: '', name: '', picture: '', locale: '', verified_email: false, given_name: '', family_name: ''};
+        // Verify the ID token if needed
+            if (authConfig.tokenVerificationEndpoint) {
+                const url = `${authConfig.tokenVerificationEndpoint}${token}`;
+                const response = await fetch(url);
         
-        if (!response.ok) {
-            const body = await response.text();
-            const error: AuthenticationError = {
-                isError: true,
-                error: AuthenticationErrorCode.TokenVerificationFailed,
-                message: `withAuthGeneric - token verification error : ${response.status} - ${response.statusText} : ${body}`,                
-            }; 
-            request.authenticationInfo = error; 
-            return;
-        }
+                if (!response.ok) {
+                    const body = await response.text();
+                    const error: AuthenticationError = {
+                        isError: true,
+                        error: AuthenticationErrorCode.TokenVerificationFailed,
+                        message: `withAuthGeneric - token verification error : ${response.status} - ${response.statusText} : ${body}`,
+                    };
+                    request.authenticationInfo = error;
+                    return;
+                }
+        
 
-        const tokenInfo = await response.json() as { sub: string; email: string; email_verified: string; name: string; picture: string, given_name: string, family_name: string };
-        const user: UserInfo = {
-            id : tokenInfo.sub,
-            email: tokenInfo.email,            
-            name: tokenInfo.name,            
-            picture: tokenInfo.picture,
-            locale: '',
-            verified_email: tokenInfo.email_verified === 'true',
-            given_name: tokenInfo.given_name,
-            family_name: tokenInfo.family_name
-        }
+                const tokenInfo = await response.json() as { sub: string; email: string; email_verified: string; name: string; picture: string, given_name: string, family_name: string };
+                user = {
+                    id: tokenInfo.sub,
+                    email: tokenInfo.email,
+                    name: tokenInfo.name,
+                    picture: tokenInfo.picture,
+                    locale: '',
+                    verified_email: tokenInfo.email_verified === 'true',
+                    given_name: tokenInfo.given_name,
+                    family_name: tokenInfo.family_name
+                }
+            }
+            else if (authConfig.getUserInfo) {
+                // else use getUserInfo function
+                const fetchedUser = await authConfig.getUserInfo(authConfig, token);
+                user = fetchedUser;
+            }
         // Attach user info to request
         request.authenticationInfo = {
             isError: false,
@@ -195,33 +203,46 @@ export async function exchangeCodeForTokens<T>(
     code: string,
     authConfigBuilder: (env: T) => OAuthConfiguration
 ): Promise<TokenResponse> {
-    const authConfig = authConfigBuilder(env);
-    const tokenEndpoint = authConfig.tokenEndpoint;
+
+    try {
+        const authConfig = authConfigBuilder(env);
+        const tokenEndpoint = authConfig.tokenEndpoint;
     
-    const params = new URLSearchParams({
-        code,
-        client_id: authConfig.clientId,
-        client_secret: authConfig.clientSecret,
-        redirect_uri: authConfig.redirectUri,
-        grant_type: 'authorization_code'
-    });
+        const params = new URLSearchParams({
+            code: code,
+            client_id: authConfig.clientId,
+            client_secret: authConfig.clientSecret,
+            redirect_uri: authConfig.redirectUri,
+            grant_type: 'authorization_code'
+        });
 
 
-    const response = await fetch(tokenEndpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString()
-    });
+        const response = await fetch(tokenEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            },
+            body: params.toString()
+        });
 
-    if (!response.ok) {
-        const errorBody = await response.text();
-        const error = await response.text();
-        throw new Error(`Token exchange failed: ${error}`);
+        if (!response.ok) {
+            const errorBody = await response.text();
+            const error = await response.text();
+            throw new Error(`Token exchange failed: ${error}`);
+        }
+        //const tokens = await response.json();
+        var text = await response.text();
+        const tokens = JSON.parse(text);
+        console.log('Tokens received:', tokens);
+        return tokens as TokenResponse;
+    }
+    catch (error: Error | any) {
+        console.log('exchangeCodeForTokens error', error);
+        throw new Error(`exchangeCodeForTokens - error during token exchange: ${error.message}`);
     }
 
-    return await response.json() as TokenResponse;
+    
 }
 
 

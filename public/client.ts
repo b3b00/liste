@@ -18,7 +18,9 @@ function isOnline(): boolean {
  * Get auth headers for API requests
  */
 function getAuthHeaders(): HeadersInit {
+    console.log('Getting auth headers from localStorage');
     const token = getAuthToken();
+    console.log('Auth token from localstorage :', token);
     const headers: HeadersInit = {
         'Content-Type': 'application/json'
     };
@@ -34,6 +36,8 @@ function getAuthHeaders(): HeadersInit {
  * Check if user is authenticated
  */
 export function isAuthenticated(): boolean {
+    const authToken = getAuthToken();
+    console.log('isAuthenticated check, token:', authToken, authToken !== null);
     return getAuthToken() !== null;
 }
 
@@ -46,11 +50,7 @@ export function getCurrentUser(): { id: string; email: string; name: string; pic
     const name = localStorage.getItem('user_name');
     const picture = localStorage.getItem('user_picture');
     
-    if (id && email && name && picture) {
-        return { id, email, name, picture };
-    }
-    
-    return null;
+    return { id: id ?? '', email: email ?? '', name: name ?? '', picture: picture ?? '' };
 }
 
 /**

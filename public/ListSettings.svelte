@@ -150,7 +150,7 @@
                     referrerpolicy="no-referrer"
                     crossorigin="anonymous"
                     on:error={(e) => {
-                        console.error('Failed to load user picture:', user.picture);
+                        console.error('Failed to load user picture:', user?.picture);
                         e.currentTarget.style.display = 'none';
                     }} 
                 />
@@ -161,7 +161,7 @@
             {/if}
             <div class="user-details">
                 <span class="user-name">{user.name}</span>
-                <span class="user-email">{user.email}</span>                
+                <span class="user-email">{user.email !== undefined && user.email !== null ? user.email : ''}</span>                
             </div>
         </div>
     </Paper>

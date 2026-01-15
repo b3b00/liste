@@ -18,6 +18,7 @@ export interface Env {
     AUTH_ENDPOINT: string;
     TOKEN_ENDPOINT: string;
     TOKEN_VERIFICATION_ENDPOINT: string;
+    USER_AGENT: string;
     SCOPE: string;
     ASSETS: Fetcher;
 }
@@ -34,16 +35,22 @@ type LRequest = {
 const router = Router()
 
 
-export async function getUserInfo(accessToken: string): Promise<UserInfo> {
-    const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+export async function getUserInfo(oauthConfig: OAuthConfiguration, accessToken: string): Promise<UserInfo> {
+    console.log(`Getting user info with access token >${accessToken}< and user agent >${oauthConfig.userAgent}<`);
+    const response = await fetch("https://api.github.com/user", {
         headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'User-Agent': oauthConfig.userAgent
         }
     });
     if (!response.ok) {        
         throw new Error(`Failed to get user info ${response.status} - ${response.statusText} : ${await response.text()}`);
     }
-    var userInfo = await response.json() as UserInfo;
+    let raw = await response.json();
+    var userInfo = raw as UserInfo;
+    userInfo.picture = raw.avatar_url; // map avatar_url to picture  
+    userInfo.email = raw.email || ''; // ensure email is a string
+    console.log('User info retrieved:', userInfo);
     return userInfo;
 }
 
@@ -58,7 +65,8 @@ function oauthConfigBuilder(env: Env): OAuthConfiguration {
         tokenEndpoint: env.TOKEN_ENDPOINT,
         callbackEndpoint: '/auth/callback',
         scope: env.SCOPE,
-        getUserInfo: getUserInfo
+        getUserInfo: getUserInfo,
+        userAgent: env.USER_AGENT
     };
 }
 
@@ -149,12 +157,11 @@ router.get<IRequest, CF>('/auth/callback', withAuthGeneric<Env>(oauthConfigBuild
                     localStorage.setItem('user_id', '${info.user?.id}');
                     localStorage.setItem('user_email', '${info.user?.email}');
                     localStorage.setItem('user_name', '${info.user?.name}');
-                    localStorage.setItem('user_picture', '${info.user?.picture}');
-                    
+                    localStorage.setItem('user_picture', '${info.user?.picture}');                    
                     // Wait a moment to ensure localStorage is written, then redirect
                     setTimeout(() => {
                         window.location.replace('/app.html');
-                    }, 5000);
+                    }, 100);
                 </script>
                 <p>Login successful! Redirecting...</p>
             </body>
@@ -184,14 +191,14 @@ router.get<IRequest, CF>('/auth/logout', async (request: IRequest, env: Env) => 
                     
                     // Revoke the Google token first
                     if (token) {
-                        try {
-                            await fetch('https://oauth2.googleapis.com/revoke?token=' + token, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                            });
-                        } catch (err) {
-                            console.log('Token revocation error:', err);
-                        }
+                        // try {
+                        //     await fetch('https://oauth2.googleapis.com/revoke?token=' + token, {
+                        //         method: 'POST',
+                        //         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                        //     });
+                        // } catch (err) {
+                        //     console.log('Token revocation error:', err);
+                        // }
                     }
                     
                     // Only clear auth-related data, keep list and categories
