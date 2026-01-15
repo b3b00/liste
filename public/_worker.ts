@@ -5,7 +5,7 @@ import { type ExecutionContext, type ScheduledController, type D1Database, type 
 import { get } from 'svelte/store'
 import { getList, saveList, getUserLists } from './logic'
 import type { SharedList } from './model'
-import { withAuthGeneric, type OAuthConfiguration, type AuthenticatedRequest, type AuthenticationError, type AuthenticationInfo, type UserInfo } from './authMiddleware'
+import { withAuthGeneric, redirectToAuthProvider, type OAuthConfiguration, type AuthenticatedRequest, type AuthenticationError, type AuthenticationInfo, type UserInfo } from './authMiddleware'
 
 
 
@@ -126,17 +126,8 @@ async function renderJson(env:Env, request:IRequest, data :any) {
 }
 
 // OAuth2 login endpoint
-router.get<IRequest, CF>('/auth/login', async (request: IRequest, env: Env) => {
-    const referer = request.headers.get('referer');
-    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', env.CLIENT_ID);
-    authUrl.searchParams.set('redirect_uri', env.REDIRECT_URI);
-    authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', env.SCOPE);
-    authUrl.searchParams.set('access_type', 'offline');
-    authUrl.searchParams.set('prompt', 'select_account');    // Force account selection
-    return Response.redirect(authUrl.toString(), 302);
-});
+router.get<IRequest, CF>('/auth/login', async (request: IRequest, env: Env) => redirectToAuthProvider(oauthConfigBuilder(env)));
+
 
 // OAuth2 callback endpoint
 router.get<IRequest, CF>('/auth/callback', withAuthGeneric<Env>(oauthConfigBuilder), async (request: IRequest, env: Env) => {

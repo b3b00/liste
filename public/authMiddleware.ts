@@ -64,6 +64,18 @@ export interface AuthenticationInfo {
  * Middleware to verify JWT token and extract user information
  */
 
+export function redirectToAuthProvider(authConfig: OAuthConfiguration): Response {
+    
+    const authUrl = new URL(authConfig.authEndpoint);
+    authUrl.searchParams.set('client_id', authConfig.clientId);
+    authUrl.searchParams.set('redirect_uri', authConfig.redirectUri);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('scope', authConfig.scope);
+    authUrl.searchParams.set('access_type', 'offline');
+    authUrl.searchParams.set('prompt', 'select_account');    // Force account selection
+    return Response.redirect(authUrl.toString(), 302);
+}
+
 export function withAuthGeneric<T>(authConfigBuilder: (env: T) => OAuthConfiguration): (request: AuthenticatedRequest, env: T) => Promise<void | Response> {
     
     const callback = async function (request: AuthenticatedRequest, env: T): Promise<void | Response> {
