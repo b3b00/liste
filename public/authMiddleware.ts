@@ -1,5 +1,4 @@
 import type { IRequest } from 'itty-router';
-import type { Env } from './_worker';
 
 export interface TokenResponse {
     access_token: string;
@@ -29,7 +28,7 @@ export interface OAuthConfiguration {
     authEndpoint: string;
     tokenEndpoint: string;
     callbackEndpoint: string;
-    scope: string,
+    scope: string,    
     getUserInfo: (accessToken: string) => Promise<UserInfo>;
 }
 
@@ -65,9 +64,9 @@ export interface AuthenticationInfo {
  * Middleware to verify JWT token and extract user information
  */
 
-export function withAuthGeneric(authConfigBuilder: (env: Env) => OAuthConfiguration): (request: AuthenticatedRequest, env: Env) => Promise<void | Response> {
+export function withAuthGeneric<T>(authConfigBuilder: (env: T) => OAuthConfiguration): (request: AuthenticatedRequest, env: T) => Promise<void | Response> {
     
-    const callback = async function (request: AuthenticatedRequest, env: Env): Promise<void | Response> {
+    const callback = async function (request: AuthenticatedRequest, env: T): Promise<void | Response> {
         try {
             const url = new URL(request.url);
             const code = url.searchParams.get('code');
@@ -106,7 +105,7 @@ export function withAuthGeneric(authConfigBuilder: (env: Env) => OAuthConfigurat
     }
     
 
-    const middleware = async function withAuth(request: AuthenticatedRequest, env: Env): Promise<void | Response> {
+    const middleware = async function withAuth(request: AuthenticatedRequest, env: T): Promise<void | Response> {
         
         const authConfig = authConfigBuilder(env);
         if (request.url.includes(authConfig.callbackEndpoint)) {
@@ -179,10 +178,10 @@ export function withAuthGeneric(authConfigBuilder: (env: Env) => OAuthConfigurat
 /**
  * Exchange authorization code for tokens
  */
-export async function exchangeCodeForTokens(
-    env: Env,
+export async function exchangeCodeForTokens<T>(
+    env: T,
     code: string,
-    authConfigBuilder: (env: Env) => OAuthConfiguration
+    authConfigBuilder: (env: T) => OAuthConfiguration
 ): Promise<TokenResponse> {
     const authConfig = authConfigBuilder(env);
     const tokenEndpoint = authConfig.tokenEndpoint;

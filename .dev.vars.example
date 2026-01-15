@@ -2,5 +2,10 @@
 # .dev.vars is gitignored and used for local development
 
 # Google OAuth2 credentials
-GOOGLE_CLIENT_ID=your-google-client-id-here
-GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+CLIENT_ID=your-google-client-id-here
+CLIENT_SECRET=your-google-client-secret-here
+REDIRECT_URI=app_callback_uri # http://localhost:8888/auth/callback
+TOKEN_ENDPOINT=token_exchange_uri # https://oauth2.googleapis.com/token
+SCOPE=scope # for google : openid email profile
+TOKEN_VERIFICATION_ENDPOINT=verification_uri # https://oauth2.googleapis.com/tokeninfo?id_token=
+AUTH_ENDPOINT=authentication_url # https://accounts.google.com/o/oauth2/v2/auth

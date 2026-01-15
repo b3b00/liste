@@ -1,19 +1,23 @@
 // NOTE : _worker.js must be place at the root of the output dir == ./public for this app
 
 import { Router, withParams, withContent, error, type IRequest  } from 'itty-router'
-import { type KVNamespace, type ExecutionContext, type ScheduledController, type D1Database, type Fetcher } from '@cloudflare/workers-types'
+import { type ExecutionContext, type ScheduledController, type D1Database, type Fetcher } from '@cloudflare/workers-types'
 import { get } from 'svelte/store'
 import { getList, saveList, getUserLists } from './logic'
 import type { SharedList } from './model'
-import { withAuthGeneric, type OAuthConfiguration, type AuthenticatedRequest, exchangeCodeForTokens,  saveUser, type AuthenticationError, type AuthenticationInfo, type UserInfo } from './authMiddleware'
+import { withAuthGeneric, type OAuthConfiguration, type AuthenticatedRequest, type AuthenticationError, type AuthenticationInfo, type UserInfo } from './authMiddleware'
+
 
 
 // Env interface - this should match worker-configuration.d.ts
 export interface Env {
     D1_lists: D1Database;
-    GOOGLE_CLIENT_ID: string;
-    GOOGLE_CLIENT_SECRET: string;
-    GOOGLE_REDIRECT_URI: string;
+    CLIENT_ID: string;
+    CLIENT_SECRET: string;
+    REDIRECT_URI: string;
+    AUTH_ENDPOINT: string;
+    TOKEN_ENDPOINT: string;
+    TOKEN_VERIFICATION_ENDPOINT: string;
     SCOPE: string;
     ASSETS: Fetcher;
 }
@@ -45,13 +49,13 @@ export async function getUserInfo(accessToken: string): Promise<UserInfo> {
 
 function oauthConfigBuilder(env: Env): OAuthConfiguration {
     return {
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-        redirectUri: env.GOOGLE_REDIRECT_URI,
-        authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+        clientId: env.CLIENT_ID,
+        clientSecret: env.CLIENT_SECRET,
+        redirectUri: env.REDIRECT_URI,
+        authEndpoint: env.AUTH_ENDPOINT,
         userInfoEndpoint: 'https://openidconnect.googleapis.com/v1/userinfo',
-        tokenVerificationEndpoint: 'https://oauth2.googleapis.com/tokeninfo?id_token=',      
-        tokenEndpoint: 'https://oauth2.googleapis.com/token',
+        tokenVerificationEndpoint: env.TOKEN_VERIFICATION_ENDPOINT,      
+        tokenEndpoint: env.TOKEN_ENDPOINT,
         callbackEndpoint: '/auth/callback',
         scope: env.SCOPE,
         getUserInfo: getUserInfo
@@ -125,17 +129,17 @@ async function renderJson(env:Env, request:IRequest, data :any) {
 router.get<IRequest, CF>('/auth/login', async (request: IRequest, env: Env) => {
     const referer = request.headers.get('referer');
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', env.GOOGLE_CLIENT_ID);
-    authUrl.searchParams.set('redirect_uri', env.GOOGLE_REDIRECT_URI);
+    authUrl.searchParams.set('client_id', env.CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', env.REDIRECT_URI);
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('scope', env.SCOPE);
     authUrl.searchParams.set('access_type', 'offline');
-    authUrl.searchParams.set('prompt', 'select_account'); // Force account selection
+    authUrl.searchParams.set('prompt', 'select_account');    // Force account selection
     return Response.redirect(authUrl.toString(), 302);
 });
 
 // OAuth2 callback endpoint
-router.get<IRequest, CF>('/auth/callback', withAuthGeneric(oauthConfigBuilder), async (request: IRequest, env: Env) => {
+router.get<IRequest, CF>('/auth/callback', withAuthGeneric<Env>(oauthConfigBuilder), async (request: IRequest, env: Env) => {
     try {
        if (request.authenticationInfo && request.authenticationInfo.isError) {
         const authError = request.authenticationInfo as AuthenticationError;
@@ -235,7 +239,7 @@ router.get<IRequest, CF>('/auth/logout', async (request: IRequest, env: Env) => 
 });
 
 // Get current user info
-router.get<AuthenticatedRequest, CF>('/auth/me', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+router.get<AuthenticatedRequest, CF>('/auth/me', withAuthGeneric<Env>(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
     if (request.authenticationInfo && request.authenticationInfo.isError) {
         const authError = request.authenticationInfo;
         return unauthorized(env, request, authError);
@@ -248,7 +252,7 @@ router.get<AuthenticatedRequest, CF>('/auth/me', withAuthGeneric(oauthConfigBuil
 });
 
 // Get all lists for authenticated user
-router.get<AuthenticatedRequest, CF>('/lists', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+router.get<AuthenticatedRequest, CF>('/lists', withAuthGeneric<Env>(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
     if (request.authenticationInfo && request.authenticationInfo.isError) {
         const authError = request.authenticationInfo;
         return unauthorized(env, request, authError);
@@ -263,7 +267,7 @@ router.get<AuthenticatedRequest, CF>('/lists', withAuthGeneric(oauthConfigBuilde
     }
 });
  
-router.get<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+router.get<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric<Env>(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
     if (request.authenticationInfo && request.authenticationInfo.isError) {
         const authError = request.authenticationInfo;
         return unauthorized(env, request, authError);
@@ -289,7 +293,7 @@ try {
 // path parameters
 //   - id (string) : list id
 // body 
-router.post<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBuilder), withParams, async (request: AuthenticatedRequest, env: Env) => {
+router.post<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric<Env>(oauthConfigBuilder), withParams, async (request: AuthenticatedRequest, env: Env) => {
     if (request.authenticationInfo && request.authenticationInfo.isError) {
         const authError = request.authenticationInfo;
         return unauthorized(env, request, authError);
@@ -312,7 +316,7 @@ router.post<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBu
 // path parameters
 //   - id (string) : list id
 // body 
-router.put<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
+router.put<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric<Env>(oauthConfigBuilder), async (request: AuthenticatedRequest, env: Env) => {
     if (request.authenticationInfo && request.authenticationInfo.isError) {
         const authError = request.authenticationInfo;
         return unauthorized(env, request, authError);
@@ -332,7 +336,7 @@ router.put<AuthenticatedRequest, CF>('/list/:id', withAuthGeneric(oauthConfigBui
 })
 
 // Auth check for root path - serve a page that checks localStorage
-router.get('/', withAuthGeneric(oauthConfigBuilder) , async (request: IRequest, env: Env) => {
+router.get('/', withAuthGeneric<Env>(oauthConfigBuilder) , async (request: IRequest, env: Env) => {
     // Serve a simple HTML page that checks auth and redirects if needed
     const html = `<!DOCTYPE html>
 <html>

@@ -1,4 +1,5 @@
 import type { SharedList } from "./model";
+import type { Env } from "../worker-configuration.d.ts";
 
 export interface D1Result<T> {
     results: T[]
