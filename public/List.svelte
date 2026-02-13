@@ -283,7 +283,14 @@
                     </Text>
                     {#if mode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
-                      <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} ></Autocomplete>
+                      <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} 
+                      
+                      on:SMUIAutocomplete:selected={(e) => {
+                          console.log('selected ',suggestionSelection,e);
+                          AddOrUpdate(e.detail,category,content.color);
+                          suggestionSelection[category] = "";
+                        }}
+                      ></Autocomplete>
                       <IconButton on:click={() => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
                           suggestionSelection[category] = "";
