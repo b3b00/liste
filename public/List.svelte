@@ -30,8 +30,6 @@
 
         let menus : {[item:string]:Menu} = {};
 
-        let suggestions : {[item:string]:string[]} = {};
-
         let suggestionSelection : {[item:string]:string} = {};
 
         let mode : ListMode = ListMode.Edit;
@@ -58,28 +56,29 @@
             });
           }
 
-        function updateSuggestions() {
-          if (mode !== ListMode.In) {
-            for(let i = 0; i < $categories.length; i++) {
-              const category = $categories[i];
-              const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
-              const currentItems = Object.hasOwn(itemsByCategory,category.label) ? itemsByCategory[category.label].items : []; 
-              const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
-              suggestions[category.label] = filteredSuggestions;
-            }
+        $: suggestions = (() => {
+          if (mode === ListMode.In) {
+            return {};
           }
-        }
+          const newSuggestions = {};
+          for(let i = 0; i < $categories.length; i++) {
+            const category = $categories[i];
+            const existingSuggestions = Object.hasOwn($itemsHistory,category.label) ? $itemsHistory[category.label] : [];
+            const currentItems = Object.hasOwn(itemsByCategory,category.label) ? itemsByCategory[category.label].items : []; 
+            const filteredSuggestions = existingSuggestions.filter(x => !currentItems.map(x => x.label).includes(x));
+            newSuggestions[category.label] = filteredSuggestions;
+          }
+          return newSuggestions;
+        })();
 
         $:{          
           mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit;
             updateItemsByCategory();
-            updateSuggestions();
         }
 
         onMount(() => {
           mode = (params.mode && params.mode == "In"? ListMode.In : $listMode) ?? ListMode.Edit; ;
             updateItemsByCategory();
-            updateSuggestions();
         })
 
         function AddOrUpdate(itemLbl : string, itemCat: string, itemCol : string) {
@@ -104,7 +103,9 @@
                 history[itemCat] = categoryHistory;
                 $itemsHistory = history;
                 updateItemsByCategory();
-                updateSuggestions();
+                
+                // Clear input
+                suggestionSelection = {...suggestionSelection, [itemCat]: ""};
         }
 
         function shop(itemId: number) {
@@ -123,7 +124,6 @@
             }
             $list = items;
             updateItemsByCategory();
-            updateSuggestions();
         }
 
         function remove(itemId: number) {
@@ -135,7 +135,6 @@
                 $sharedList.list = items;
             }
             updateItemsByCategory();
-            updateSuggestions();
         }        
 
         function clean() {
@@ -146,7 +145,6 @@
             $list = [];
           }
           updateItemsByCategory();
-          updateSuggestions();
         }
 
         function showChecked(event : {selected:boolean}) {
@@ -203,7 +201,6 @@
           })
             $list = items;
             updateItemsByCategory();
-            updateSuggestions();
           }
         }
     </script>
@@ -284,18 +281,19 @@
                     {#if mode == ListMode.Edit}
                       <div style="display:flex;flex-direction:row">
                       <Autocomplete label="Ajouter..." combobox options={suggestions[category]} bind:value={suggestionSelection[category]} 
-                      
                       on:SMUIAutocomplete:selected={(e) => {
                           console.log('selected ',suggestionSelection,e);
-                          AddOrUpdate(e.detail,category,content.color);
-                          suggestionSelection[category] = "";
+                          const value = e.detail;
+                          const cat = category;
+                          const col = content.color;
+                          // Use requestAnimationFrame to ensure this runs after SMUI internal updates
+                          requestAnimationFrame(() => {
+                            AddOrUpdate(value, cat, col);
+                          });
                         }}
                       ></Autocomplete>
                       <IconButton on:click={() => { 
                           AddOrUpdate(suggestionSelection[category],category,content.color);
-                          suggestionSelection[category] = "";
-                          suggestionSelection = suggestionSelection;
-                          console.log(suggestionSelection);
                         } 
                         }>
                         
