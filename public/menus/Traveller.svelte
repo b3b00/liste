@@ -1,5 +1,6 @@
 <script>
   import Card from '@smui/card';
+  import Paper,{Content, Title} from '@smui/paper';
   import { menus } from '../store.js';
   menus.useLocalStorage();
   import { onMount } from 'svelte';
@@ -53,8 +54,8 @@
     
     // current week dates
     displayStart = _formatDisplayDate(st);
+    
     displayEnd = _formatDisplayDate(en); 
-
     // travel links
     previousWeek = _subDaysToDate(st,7);
     nextWeek = _addDaysToDate(en,1);
@@ -67,18 +68,20 @@
 
 </script>
 <div style="margin: 0px auto; width: 100%; flex-flow: column wrap; padding: 10px; display: flex;" travellercardcontainer >
-  <Card>
-    <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
-      
-        <a href="{todayLink}" title="aujourd'hui" style="margin:auto;width:15%;text-align:right;">
-        <Icon class="material-icons">today</Icon>  
-        </a>
-      
-    </div>
-    <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
-      <span style="width:15%;text-align:right;"><a title="semaine précédente" href="{previousLink}"><Icon class="material-icons" style="cursor: pointer;" >skip_previous</Icon></a></span>
-      <span style="width:70%;text-align: center;">{displayStart} - {displayEnd}</span>
-      <span style="width:15%;text-align:left"><a title="semaine suivante" href="{nextLink}"><Icon style="cursor: pointer;" class="material-icons" >skip_next</Icon></a></span>
-    </div>
-    </Card>
+  <Paper square variant="outlined">  
+    <Content>
+        <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
+          
+            <a href="{todayLink}" title="aujourd'hui" style="margin:auto;width:15%;text-align:right;">
+            <Icon class="material-icons">today</Icon>  
+            </a>
+          
+        </div>
+        <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
+          <span style="width:15%;text-align:right;"><a title="semaine précédente" href="{previousLink}"><Icon class="material-icons" style="cursor: pointer;" >skip_previous</Icon></a></span>
+          <span style="width:70%;text-align: center;">{displayStart} - {displayEnd}</span>
+          <span style="width:15%;text-align:left"><a title="semaine suivante" href="{nextLink}"><Icon style="cursor: pointer;" class="material-icons" >skip_next</Icon></a></span>
+        </div>
+      </Content>
+    </Paper>
 </div>

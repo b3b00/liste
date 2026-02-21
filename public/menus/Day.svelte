@@ -1,16 +1,16 @@
 <script>
     import { onMount } from 'svelte';
     import { createEventDispatcher } from 'svelte';
-    import Card from '@smui/card';
     import Button, { Label } from '@smui/button';
     import Fab, { Icon } from '@smui/fab';
+    import Paper from '@smui/paper';
     import {_startOfWeekDate,_endOfWeekDate,_parseDate,_formatShortDate,_formatDisplayDate} from './time.js'
     import Dialog, {Title, Content, Actions, InitialFocus} from '@smui/dialog';
     import Textfield from '@smui/textfield'
     import { menus } from '../store.js';
     import List, {Item, Graphic, Text} from '@smui/list';
 
-    onMount(async () => {       
+    onMount(async () => {
         getMeals(); 
     });
 
@@ -124,7 +124,7 @@
 </style>
 
 <div style="margin: 0 auto; width: 100%;  flex-wrap:wrap; padding: 10px;display:flex;flex-direction: column;">
-    <Card>
+    <Paper square variant="outlined"> 
         <span class="centered" >{_formatDisplayDate(_parseDate(day.date))}</span>
         <div style="margin: 0 auto; width: 80%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
             <!-- style="width:80%;text-align:left;" -->
@@ -138,7 +138,7 @@
             <Icon class="material-icons" on:click={() => search('dinner')} style="cursor: pointer;width:10%;text-align: center; vertical-align: middle;" >loupe</Icon>
             <Icon class="material-icons" on:click={toggleDinner} style="cursor: pointer;width:10%;text-align: center; vertical-align: bottom;" >{day.checkedDinner ? "swap_vertical_circle" : "swap_vert"}</Icon>
         </div>
-    </Card>
+    </Paper>
     
 </div>
 
