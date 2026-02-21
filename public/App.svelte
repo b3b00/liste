@@ -9,10 +9,12 @@
     import IconButton from '@smui/icon-button';
     import TopAppBar, {Row, Section} from '@smui/top-app-bar';  
     import Cart from "svelte-material-icons/Cart.svelte";
-    import FormatListBulleted from "svelte-material-icons/Shape.svelte";
+    import FormatListBulleted from "svelte-material-icons/FormatListBulleted.svelte";
+    import SilverwareForkKnife from "svelte-material-icons/SilverwareForkKnife.svelte";
     import Share  from 'svelte-material-icons/Share.svelte';
     import Pen from "svelte-material-icons/Pen.svelte";
     import Inbox from "svelte-material-icons/Inbox.svelte";
+    import Week from "./menus/Week.svelte";
     import { onMount } from 'svelte';
     import { ListMode } from "./model"
     import { listMode, list, sharedList, categories } from "./store";
@@ -27,7 +29,8 @@
       '/categories': Categories,
       '/list/:mode?': ShopList,
       '/': ShopList,
-      '/import/:data': Import
+      '/import/:data': Import,
+      '/menus/:first?': Week
       }
   
   
@@ -125,6 +128,11 @@
             <Share></Share>
           </IconButton>
         </Section>
+        <Section align="end" toolbar>
+          <IconButton on:click={() => push('/menus')} toggle>
+            <SilverwareForkKnife></SilverwareForkKnife>
+          </IconButton>
+          </Section>
         {#if $sharedList && $sharedList.categories && $sharedList.categories.length > 0 && $sharedList.list && $sharedList.list.length > 0}
           <Section align="end" toolbar>
             <IconButton on:click={() => push('/list/In')} toggle>

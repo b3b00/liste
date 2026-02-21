@@ -30,6 +30,7 @@
         "@rollup/plugin-terser": "^0.4.0",
         "@rollup/plugin-typescript": "^11.1.6",
         "CloudflareIttySvelteTemplate": "file:",
+        "date-fns": "^4.1.0",
         "itty-router": "5.0.17",
         "lz-ts": "^1.1.2",
         "lzma-web": "^3.0.1",
