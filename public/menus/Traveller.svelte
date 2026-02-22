@@ -78,27 +78,26 @@
   <Paper square variant="outlined">  
     <Content>
         <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: column;">
-        <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
-          
-          <span style="width:70%;text-align: center;">{displayStart} - {displayEnd}</span>
-          
-        </div>
-        <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
-          <!-- previous week -->
-          <IconButton on:click={() => {push(previousLink);} } toggle>
-            <StepBackward></StepBackward>
-          </IconButton>
-          <!-- current week -->
-          <IconButton on:click={() => {push(todayLink);} } toggle>
-            <CalendarToday></CalendarToday>  
-          </IconButton>
-          <!-- next week -->  
-          <IconButton on:click={() => {push(nextLink);} } toggle>
-            <StepForward></StepForward>
-          </IconButton>          
-        </div>
-      </div>
-        
+          <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row; justify-content: center;">
+            
+            <span style="width:70%;text-align: center;">{displayStart} - {displayEnd}</span>
+            
+          </div>
+          <div style="margin: 0 auto; width: 100%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row; justify-content: center;">
+            <!-- previous week -->
+            <IconButton on:click={() => {push(previousLink);} } toggle>
+              <StepBackward></StepBackward>
+            </IconButton>
+            <!-- current week -->
+            <IconButton on:click={() => {push(todayLink);} } toggle>
+              <CalendarToday></CalendarToday>  
+            </IconButton>
+            <!-- next week -->  
+            <IconButton on:click={() => {push(nextLink);} } toggle>
+              <StepForward></StepForward>
+            </IconButton>          
+          </div>
+        </div>        
       </Content>
     </Paper>
 </div>
