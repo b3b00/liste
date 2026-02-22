@@ -8,7 +8,7 @@
     // import Dialog, {Title, Content, Actions, InitialFocus} from '@smui/dialog';
     import Textfield from '@smui/textfield'
     import { menus } from '../store.js';
-    import List, {Item, Graphic, Text} from '@smui/list';
+import Autocomplete from '@smui-extra/autocomplete';
     
 
     onMount(async () => {
@@ -129,13 +129,15 @@
         <span class="centered" >{_formatDisplayDate(_parseDate(day.date))}</span>
         <div style="margin: 0 auto; width: 80%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
             <!-- style="width:80%;text-align:left;" -->
-            <Textfield bind:value={day.lunch}  style="width:80%" label="midi" on:change={onChange} width="100%"/>
+            <!-- <Textfield bind:value={day.lunch}  style="width:80%" label="midi" on:change={onChange} width="100%"/> -->
+            <Autocomplete label="Déjeuner..." combobox options={items} bind:value={day.lunch}></Autocomplete>
             <Icon class="material-icons" on:click={() => search('lunch')} style="cursor: pointer;width:10%;text-align: center; vertical-align: bottom;" >loupe</Icon>
             <Icon class="material-icons" on:click={toggleLunch} style="cursor: pointer;width:10%;text-align: center; vertical-align: bottom;" >{day.checkedLunch ? "swap_vertical_circle" : "swap_vert"}</Icon>
         </div>
         <div style="margin: 0 auto; width: 80%; flex-grow: 1; flex-wrap:wrap; padding: 10px;display:flex;flex-direction: row;">
             <!-- style="width:80%;text-align:left;" -->
-            <Textfield bind:value={day.dinner}  style="width:80%" label="soir" on:change={onChange} width="100%"/>
+            <!-- <Textfield bind:value={day.dinner}  style="width:80%" label="soir" on:change={onChange} width="100%"/> -->
+             <Autocomplete label="Dîner..." combobox options={items} bind:value={day.dinner}></Autocomplete>
             <Icon class="material-icons" on:click={() => search('dinner')} style="cursor: pointer;width:10%;text-align: center; vertical-align: middle;" >loupe</Icon>
             <Icon class="material-icons" on:click={toggleDinner} style="cursor: pointer;width:10%;text-align: center; vertical-align: bottom;" >{day.checkedDinner ? "swap_vertical_circle" : "swap_vert"}</Icon>
         </div>
