@@ -1,10 +1,7 @@
 <script>
 
-    import Card from '@smui/card';
-    import Button, {Label} from '@smui/button';
-    import Fab, { Icon } from '@smui/fab';
+    import Paper from '@smui/paper';
     
-    import Textfield from '@smui/textfield'
     import { onMount } from 'svelte';
     import Day from './Day.svelte';
     import Traveller from './Traveller.svelte';
@@ -155,7 +152,6 @@
     {/each}
 </div>
 <div class="container">
-    <Card>
-    </Card>
+    <Paper square variant="outlined">
+    </Paper>
 </div>
-

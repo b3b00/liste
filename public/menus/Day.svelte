@@ -5,10 +5,11 @@
     import Fab, { Icon } from '@smui/fab';
     import Paper from '@smui/paper';
     import {_startOfWeekDate,_endOfWeekDate,_parseDate,_formatShortDate,_formatDisplayDate} from './time.js'
-    import Dialog, {Title, Content, Actions, InitialFocus} from '@smui/dialog';
+    // import Dialog, {Title, Content, Actions, InitialFocus} from '@smui/dialog';
     import Textfield from '@smui/textfield'
     import { menus } from '../store.js';
     import List, {Item, Graphic, Text} from '@smui/list';
+    
 
     onMount(async () => {
         getMeals(); 
@@ -144,7 +145,7 @@
 
     
 
-    <Dialog bind:this={listDialog} aria-labelledby="list-title" aria-describedby="list-content">
+    <!-- <Dialog bind:this={listDialog} aria-labelledby="list-title" aria-describedby="list-content">
       <Title id="list-title"></Title>
       <Content component={List} id="list-content">
         {#each items as meal}
@@ -153,4 +154,4 @@
           </Item>
         {/each}
       </Content>
-    </Dialog>
+    </Dialog> -->

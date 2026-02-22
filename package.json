@@ -19,6 +19,7 @@
         "@cloudflare/workers-types": "^4.20231121.0",
         "@smui/icon-button": "^7.0.0",
         "@svelte-plugins/tooltips": "^3.0.0",
+        "@tsconfig/svelte": "^5.0.8",
         "prettier": "^1.17.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.3.3"
@@ -29,6 +30,7 @@
         "@rollup/plugin-node-resolve": "^15.0.0",
         "@rollup/plugin-terser": "^0.4.0",
         "@rollup/plugin-typescript": "^11.1.6",
+        "@smui/dialog": "^7.0.0",
         "CloudflareIttySvelteTemplate": "file:",
         "date-fns": "^4.1.0",
         "itty-router": "5.0.17",
