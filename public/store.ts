@@ -4,6 +4,7 @@ import type { ShopItem } from './model';
 import { ListMode } from './model';
 
 
+
 const createWritableStore = <T>(key:string, startValue:T) => {
     const { subscribe, set, update } = writable(startValue);
 
@@ -38,4 +39,6 @@ const createWritableStore = <T>(key:string, startValue:T) => {
   export const listMode = writable<ListMode>(ListMode.Edit);
 
   export const sharedList = createWritableStore<SharedList>('sharedList',{categories:[],list:[]});
+
+  export const menus = createWritableStore<any>('menus', {});
   

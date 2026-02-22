@@ -181,7 +181,7 @@
       <Label>Annuler</Label>
     </Button>
     <Button action="delete">
-        <label>Supprimer</label> 
+        <Label>Supprimer</Label> 
     </Button>
     <Button action="OK">
       <Label>OK</Label>
@@ -196,7 +196,7 @@
             {#if i < $categories.length-1}
             <Button on:click={() => down(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronDown width="2em" height="2em" color="black"></ChevronDown></Button>
             {/if}
-            <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color};flex-grow:15" color="{category.color}" on:click={openEditor(true,category.label,category.color)}>{category.label} </Button>
+            <Button class="button-shaped-round" style="color:black;font-weight: bold;background-color:{category.color};flex-grow:15" color="{category.color}" on:click={() => openEditor(true,category.label,category.color)}>{category.label} </Button>
             {#if i > 0}
             <Button on:click={() => up(i,category)} style="background-color:{category.color};flex-grow:1"><ChevronUp width="2em" height="2em" color="black"></ChevronUp></Button>
             {/if}
